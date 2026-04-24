@@ -43,11 +43,10 @@
       </div>
     </section>
 
-    <section id="result-section" class="hidden">
-      <div class="card result-card">
-        <h2>Resultaat</h2>
-        <div id="result-content"></div>
-        <button id="reset-btn" class="btn-secondary">Nieuw raadsvoorstel toetsen</button>
+    <section id="loading-section" class="hidden">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <p>Raadsvoorstel wordt geanalyseerd&hellip;<br/><small>Dit duurt ongeveer 30 seconden.</small></p>
       </div>
     </section>
 
@@ -57,10 +56,42 @@
       </div>
     </section>
 
-    <section id="loading-section" class="hidden">
-      <div class="loading-card">
-        <div class="spinner"></div>
-        <p>Raadsvoorstel wordt geanalyseerd&hellip;<br/><small>Dit duurt ongeveer 30 seconden.</small></p>
+    <section id="result-section" class="hidden">
+      <div class="result-layout">
+
+        <!-- Links: volledig rapport -->
+        <div class="rapport-col">
+          <div class="card result-card">
+            <h2>Kwaliteitstoets</h2>
+            <div id="rapport-content"></div>
+          </div>
+          <button id="reset-btn" class="btn-secondary">Nieuw raadsvoorstel toetsen</button>
+        </div>
+
+        <!-- Rechts: sidebar -->
+        <aside class="sidebar-col">
+
+          <div class="sidebar-block">
+            <h3>Beslispunten</h3>
+            <ol id="beslispunten-list"></ol>
+          </div>
+
+          <div class="sidebar-block">
+            <h3>Kern van het voorstel</h3>
+            <p id="kern-text"></p>
+          </div>
+
+          <div class="sidebar-block verbeter-block">
+            <h3>Verbeterpunten</h3>
+            <ul id="verbeter-list"></ul>
+          </div>
+
+          <div class="sidebar-block vragen-block">
+            <h3>Verwachte raadsvragen</h3>
+            <ol id="vragen-list"></ol>
+          </div>
+
+        </aside>
       </div>
     </section>
   </main>

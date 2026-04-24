@@ -3,7 +3,6 @@ const pdfInput = document.getElementById("pdf-input");
 const urlInput = document.getElementById("url-input");
 const submitBtn = document.getElementById("submit-btn");
 const resultSection = document.getElementById("result-section");
-const resultContent = document.getElementById("result-content");
 const errorSection = document.getElementById("error-section");
 const errorMessage = document.getElementById("error-message");
 const loadingSection = document.getElementById("loading-section");
@@ -45,7 +44,7 @@ submitBtn.addEventListener("click", async () => {
     if (!res.ok) throw new Error(data.error || "Er ging iets mis.");
 
     loadingSection.classList.add("hidden");
-    resultContent.textContent = data.result;
+    renderResult(data);
     resultSection.classList.remove("hidden");
 
   } catch (err) {
@@ -62,6 +61,59 @@ resetBtn.addEventListener("click", () => {
   document.getElementById("pdf-file").value = "";
   document.getElementById("pdf-url").value = "";
 });
+
+function renderResult(data) {
+  // Rapport
+  const rapportEl = document.getElementById("rapport-content");
+  rapportEl.innerHTML = formatRapport(data.rapport || "");
+
+  // Beslispunten
+  const beslisEl = document.getElementById("beslispunten-list");
+  beslisEl.innerHTML = (data.beslispunten || [])
+    .map(p => `<li>${escHtml(p)}</li>`).join("");
+
+  // Kern
+  document.getElementById("kern-text").textContent = data.kern || "";
+
+  // Verbeterpunten
+  const verbeterEl = document.getElementById("verbeter-list");
+  verbeterEl.innerHTML = (data.verbeterpunten || [])
+    .map(p => `<li>${escHtml(p)}</li>`).join("");
+
+  // Raadsvragen
+  const vragenEl = document.getElementById("vragen-list");
+  vragenEl.innerHTML = (data.raadsvragen || [])
+    .map(v => `<li>${escHtml(v)}</li>`).join("");
+}
+
+function formatRapport(tekst) {
+  const secties = ["Samenvatting", "Aandachtspunten", "Risico's", "Advies"];
+  let html = tekst;
+
+  secties.forEach(sectie => {
+    html = html.replace(
+      new RegExp(`(^|\\n)(${sectie})\\n`, "g"),
+      `$1<div class="rapport-sectie"><h4>${sectie}</h4><p>`
+    );
+  });
+
+  // Sluit open <p> tags
+  let count = (html.match(/<div class="rapport-sectie">/g) || []).length;
+  for (let i = 0; i < count; i++) {
+    html = html.replace(/(<div class="rapport-sectie"><h4>[^<]+<\/h4><p>)([\s\S]*?)(<div class="rapport-sectie">|$)/, (m, open, content, next) => {
+      return open + escHtml(content).replace(/\n/g, "<br>") + "</p></div>" + next;
+    });
+  }
+
+  return `<div>${html}</div>`;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
 function hideAll() {
   resultSection.classList.add("hidden");

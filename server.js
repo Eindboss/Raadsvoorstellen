@@ -193,17 +193,45 @@ async function callOpenAI(text) {
 
   const truncated = text.slice(0, 60000);
 
+  const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie.
+
+Geef je antwoord als geldig JSON in dit exacte formaat:
+{
+  "beslispunten": ["beslispunt 1", "beslispunt 2"],
+  "kern": "Één of twee zinnen over waar dit voorstel over gaat en wat de kern van het verzoek is.",
+  "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
+  "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
+  "rapport": "Samenvatting\\n[tekst]\\n\\nAandachtspunten\\n[tekst]\\n\\nRisico's\\n[tekst]\\n\\nAdvies\\n[tekst]"
+}
+
+Regels:
+- beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
+- kern: neutrale samenvatting van het voorstel in gewone taal
+- verbeterpunten: concrete, herstelbare punten als korte bullets (max 6)
+- raadsvragen: de 3 meest voor de hand liggende kritische vragen die een raadslid aan het college zal stellen over dit voorstel
+- rapport: het volledige toetsrapport volgens de rubric
+
+---
+
+${truncated}`;
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.1,
-    max_tokens: 2048,
+    max_tokens: 3000,
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie.\n\n---\n\n${truncated}` }
+      { role: "user", content: userPrompt }
     ]
   });
 
-  return response.choices?.[0]?.message?.content || "Geen resultaat ontvangen.";
+  const content = response.choices?.[0]?.message?.content || "{}";
+  try {
+    return JSON.parse(content);
+  } catch(e) {
+    return { rapport: content, beslispunten: [], kern: "", verbeterpunten: [] };
+  }
 }
 
 // API endpoint
@@ -233,7 +261,7 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
     }
 
     const result = await callOpenAI(text);
-    res.json({ result });
+    res.json(result);
 
   } catch (err) {
     res.status(500).json({ error: err.message || "Onbekende fout." });
