@@ -1,4 +1,4 @@
-try { require("dotenv").config(); } catch(e) {}
+try { require("dotenv").config(); } catch (e) {}
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -9,13 +9,16 @@ const { OpenAI } = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }
+});
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Daily limit
-const DAILY_LIMIT = parseInt(process.env.DAILY_LIMIT || "100");
+const DAILY_LIMIT = parseInt(process.env.DAILY_LIMIT || "100", 10);
 let dailyCount = 0;
 let lastReset = new Date().toDateString();
 
@@ -30,9 +33,118 @@ function checkLimit() {
   return true;
 }
 
+const SCHUWER_BEVOEGDHEID_RAAD = `
+Schuwer-lijn: bevoegdheid van de raad
+
+Toets bij elk voorstel expliciet of de raad juridisch bevoegd is om het gevraagde besluit te nemen.
+
+Uitgangspunt volgens Schuwer:
+De raad staat grondwettelijk aan het hoofd van de gemeente, maar dat betekent niet dat de raad over alles gaat. De Gemeentewet en bijzondere wetten verdelen bevoegdheden tussen raad, college en burgemeester. College en burgemeester ontlenen hun bevoegdheden rechtstreeks aan de wet via attributie. Die bevoegdheden zijn dus niet afgeleid van de raad.
+
+1. Raad als hoogste politieke orgaan
+De raad is het hoogste politieke orgaan en controleert achteraf hoe college en burgemeester hun wettelijke bevoegdheden gebruiken. De raad mag niet doen alsof collegebevoegdheden eigenlijk raadsbevoegdheden zijn.
+
+Signaleer als:
+het voorstel de raad laat besluiten over een bevoegdheid die wettelijk bij het college of de burgemeester ligt;
+het voorstel doet alsof de raad vooraf moet instemmen met een collegebevoegdheid;
+kaderstelling wordt gebruikt om een wettelijke college- of burgemeestersbevoegdheid uit te hollen.
+
+2. Attributie
+Bij attributie kent de wet een bevoegdheid rechtstreeks toe aan een bestuursorgaan. Als de wet een bevoegdheid aan college of burgemeester geeft, is dat orgaan juridisch eigenaar van die bevoegdheid.
+
+Signaleer als:
+de raad een besluit moet nemen terwijl alleen wensen en bedenkingen, kennisname of controle aan de orde zijn;
+het voorstel geen onderscheid maakt tussen besluiten, vaststellen, instemmen, kennisnemen, wensen en bedenkingen geven of controleren.
+
+3. Wetgevende bevoegdheid van de raad
+De raad is de wetgevende macht binnen de gemeente. Artikel 147 Gemeentewet is leidend bij het vaststellen van verordeningen. Bij medebewind heeft de raad geen vrije hand: de hogere wet bepaalt welke belangen de raad mag of moet regelen.
+
+Signaleer als:
+een verordening verder gaat dan de wettelijke grondslag toestaat;
+het college regelgevende bevoegdheid krijgt zonder duidelijke grondslag in de verordening;
+de wet zegt bij verordening maar het voorstel toch nadere regels door het college laat stellen;
+niet duidelijk is of bij verordening of bij of krachtens verordening geldt.
+
+4. Nadere regels en beleidsregels
+Het college heeft geen zelfstandige algemene bevoegdheid om regelgeving vast te stellen. Nadere regels kunnen alleen als de raad die ruimte in een verordening geeft en de hogere wet dat toestaat.
+Beleidsregels zijn iets anders. Beleidsregels worden vastgesteld door het bestuursorgaan dat de betreffende bevoegdheid uitoefent. Meestal is dat het college of de burgemeester, niet de raad.
+
+Signaleer als:
+de raad beleidsregels vaststelt over een bevoegdheid van college of burgemeester;
+de raad in een verordening bepaalt dat het college beleidsregels moet vaststellen;
+nadere regels en beleidsregels door elkaar worden gehaald.
+
+5. Collegebevoegdheden
+Het dagelijks bestuur ligt bij het college. Het college besluit als eenheid en treedt als eenheid naar buiten. De raad controleert het college, maar neemt de collegebesluiten niet over.
+
+Signaleer als:
+het raadsvoorstel de raad laat beslissen over uitvoering, vergunningverlening, privaatrechtelijke rechtshandelingen of dagelijkse bestuurszaken zonder wettelijke raadsgrondslag;
+het voorstel de raad alleen laat instemmen met een al genomen of feitelijk al uitgewerkt collegebesluit.
+
+6. Informatie en controle
+De raad heeft informatie nodig om te controleren. College en burgemeester hebben een actieve en passieve inlichtingenplicht. Volgens Schuwer is de raad als hoofd van de gemeente degene die bepaalt welke collegebesluiten met de raad worden gedeeld, behoudens strijd met het openbaar belang.
+
+Signaleer als:
+het voorstel onvoldoende informatie bevat om de controlerende rol uit te oefenen;
+essentiele collegebesluiten ontbreken terwijl zij nodig zijn voor de beoordeling;
+geheimhouding of beslotenheid wordt gebruikt zonder duidelijke juridische basis.
+
+7. Gemeenschappelijke regelingen en zienswijzen
+Bij gemeenschappelijke regelingen is de positie van de raad versterkt. De raad moet tijdig kunnen sturen, niet pas aan het eind van de pijplijn. Bij oprichting, toetreding of wijziging van een gemeenschappelijke regeling moet worden gecontroleerd of de raad een zienswijze of toestemming moet geven en op welke wettelijke grondslag.
+
+Signaleer als:
+de grondslag voor de zienswijze ontbreekt;
+het voorstel niet duidelijk maakt of het gaat om zienswijze, toestemming, wensen en bedenkingen of kennisname;
+de raad alleen ja/nee kan zeggen terwijl kaderstelling vooraf nodig was;
+de raad te laat wordt betrokken om nog betekenisvol invloed uit te oefenen.
+
+8. Omgevingswet en BOPA
+Bij een buitenplanse omgevingsplanactiviteit is meestal het college bevoegd gezag. Als de raad gevallen heeft aangewezen waarin advies van de raad nodig is, blijft het college bevoegd gezag maar moet het college het raadsadvies in acht nemen.
+
+Signaleer als:
+het voorstel suggereert dat de raad bevoegd gezag is voor de vergunning;
+niet duidelijk is of de activiteit valt onder de door de raad aangewezen adviesgevallen;
+het advies van de raad wordt aangeduid als bindend advies zonder uit te leggen dat het college bevoegd gezag blijft en moet besluiten met inachtneming van het advies.
+
+9. Benoemingen en toelating
+De raad benoemt wethouders. De raad benoemt geen raadsleden: raadsleden worden benoemd door de voorzitter van het centraal stembureau en de raad beslist alleen over toelating na onderzoek van de geloofsbrieven.
+
+Signaleer als:
+een voorstel spreekt over benoeming raadslid in plaats van toelating;
+bij toelating wordt getoetst aan nevenfuncties, gedrag, politieke wenselijkheid of verboden handelingen voor het raadslidmaatschap;
+een wethouder wordt gepresenteerd als iets waarmee de raad slechts instemt, terwijl de raad benoemt;
+bij wethoudersbenoeming geen VOG is betrokken terwijl die vereist is.
+
+10. Commissies
+Een raadscommissie bereidt raadsbesluiten voor, maar treedt niet in de plaats van de raad. Een commissie kan niet namens de raad een inhoudelijke zienswijze geven op een ontwerpbegroting van een gemeenschappelijke regeling.
+
+Signaleer als:
+een voorbereidende vergadering of commissie feitelijk een raadsbesluit neemt;
+een commissie namens de raad een inhoudelijke zienswijze geeft;
+niet duidelijk is wat besluitvorming door commissie en besluitvorming door raad van elkaar onderscheidt.
+
+11. Terminologie
+Gebruik juridisch zuivere taal. Schuwer waarschuwt voor bestuurlijke mist.
+
+Corrigeer of signaleer:
+de raad stemt in met waar de raad besluit, stelt vast, geeft toestemming of geeft zienswijze bedoeld is;
+benoeming raadslid waar toelating raadslid bedoeld is;
+demissionaire wethouder als juridisch onjuiste kwalificatie;
+bindend advies bij BOPA zonder juridische duiding;
+de raad gaat over alles als uitgangspunt.
+
+12. Ridderkerkse lokale regels
+Neem bij Ridderkerk mee:
+Het Reglement van orde van de raad 2024 is gebaseerd op artikel 16 Gemeentewet.
+Het presidium doet aanbevelingen over organisatie en functioneren van raad en commissies en stelt de vergadercyclus vast.
+Artikel 6 RvO regelt onderzoek geloofsbrieven, beediging en benoeming wethouders.
+De Verordening op de raadsvoorbereiding Ridderkerk 2023 is gebaseerd op artikel 82 en artikel 84 Gemeentewet.
+Voorbereidende vergaderingen zijn artikel 82-commissies en bereiden raadsbesluiten voor; zij vervangen de raad niet.
+`;
+
 const SYSTEM_PROMPT = `Rol
 
-Je bent een gespecialiseerde juridisch-administratieve assistent. Je beoordeelt concept-raadsvoorstellen vóór behandeling in het college. Je voert uitsluitend een formele kwaliteitstoets uit.
+Je bent een gespecialiseerde juridisch-administratieve assistent. Je beoordeelt concept-raadsvoorstellen voor behandeling in het college. Je voert uitsluitend een formele kwaliteitstoets uit.
 
 Je beoordeelt niet:
 politieke wenselijkheid, beleidsinhoud, bestuurlijke afwegingen of maatschappelijke keuzes.
@@ -56,8 +168,8 @@ Classificatie en toetsprofiel
 
 Voordat je aandachtspunten formuleert, bepaal je per rubriek of deze voor dit type voorstel niet relevant, licht relevant, normaal relevant of zwaar relevant is.
 Formuleer geen aandachtspunt binnen een rubriek die niet relevant is, tenzij het voorstel zelf die rubriek toch relevant maakt.
-Een eenvoudige benoeming vereist geen financiële of juridische dieptetoets.
-Een kredietaanvraag of grondexploitatie vereist een strenge financiële toets.
+Een eenvoudige benoeming vereist geen financiele of juridische dieptetoets.
+Een kredietaanvraag of grondexploitatie vereist een strenge financiele toets.
 Een verordening vereist een strenge juridische toets en controle van interne verwijzingen.
 Een zienswijze vereist controle op de grondslag van de raadsbevoegdheid.
 
@@ -71,7 +183,7 @@ Controleer of elk beslispunt zelfstandig leesbaar is zonder toelichting.
 Signaleer als:
 de formulering een constatering is in plaats van een besluit,
 meerdere interpretaties mogelijk zijn,
-meerdere besluiten in één beslispunt zijn samengevoegd,
+meerdere besluiten in een beslispunt zijn samengevoegd,
 of het beslispunt alleen begrijpelijk is met de toelichting.
 
 Controleer bij moties altijd:
@@ -82,12 +194,12 @@ heeft de raad eerder geoordeeld over de afdoening van deze motie? Zo ja, onderbo
 Controleer of minimaal aanwezig is:
 aanleiding,
 wat van de raad wordt gevraagd,
-en de relevante gevolgen, zoals financiële, juridische of organisatorische gevolgen.
+en de relevante gevolgen, zoals financiele, juridische of organisatorische gevolgen.
 
 Controleer of de toelichting logisch is opgebouwd en begrijpelijk is voor een raadslid zonder voorkennis.
 
 Signaleer als:
-essentiële informatie ontbreekt,
+essentiele informatie ontbreekt,
 de argumentatie niet naar het besluit toeleidt,
 of tegenstrijdigheden voorkomen.
 
@@ -117,14 +229,14 @@ of een verwijzing naar een bijlage onjuist of misleidend is.
 
 Bij zienswijzen controleer je of het daadwerkelijk gaat om een zienswijze van de raad.
 
-5. Financiële aspecten
+5. Financiele aspecten
 
-Controleer of financiële gevolgen zijn benoemd.
+Controleer of financiele gevolgen zijn benoemd.
 Controleer of duidelijk is of het om incidentele of structurele gevolgen gaat.
 Controleer of de dekking concreet en herleidbaar is.
 
 Signaleer als:
-er financiële gevolgen zijn zonder dat dit uit het voorstel blijkt,
+er financiele gevolgen zijn zonder dat dit uit het voorstel blijkt,
 of dekking ontbreekt of onduidelijk is.
 
 6. Rolzuiverheid
@@ -186,7 +298,7 @@ Maximaal drie zinnen over duidelijkheid, volledigheid en besluitrijpheid. Herhaa
 
 Aandachtspunten
 Alleen punten die herstel vereisen.
-Per aandachtspunt: eerst het probleem in één of twee zinnen, daarna het herstel in één zin.
+Per aandachtspunt: eerst het probleem in een of twee zinnen, daarna het herstel in een zin.
 Geen rubriekaanduidingen tussen haakjes.
 Kritieke punten eerst, daarna overige punten.
 
@@ -195,7 +307,9 @@ Alleen indien van toepassing.
 Maximaal twee zinnen per risico.
 
 Advies
-Eén of twee concrete herstelacties, geordend naar prioriteit.`;
+Een of twee concrete herstelacties, geordend naar prioriteit.
+
+${SCHUWER_BEVOEGDHEID_RAAD}`;
 
 async function callOpenAI(text) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
@@ -204,8 +318,9 @@ async function callOpenAI(text) {
 
   const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
 Stap 1: classificeer het voorstel volledig (hoofdType, subType, complexiteit, toetsprofiel).
-Stap 2: voer de toets uit waarbij je per rubriek het toetsprofiel toepast — formuleer geen aandachtspunten voor rubrieken die niet relevant zijn.
+Stap 2: voer de toets uit waarbij je per rubriek het toetsprofiel toepast en formuleer geen aandachtspunten voor rubrieken die niet relevant zijn.
 Stap 3: genereer altijd minimaal 3 concrete raadsvragen toegespitst op dit voorstel.
+Stap 4: voer bij bevoegdheid expliciet de Schuwer-toets uit.
 
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
@@ -214,7 +329,7 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
     "hoofdType": "personeel-organisatie | zienswijze-verbonden-partijen | regelgeving | financien-penc | ruimte-grond-vastgoed | beleid-kaderstelling | controle-moties-toezeggingen | bedrijfsvoering-informatie | sociaal-domein-subsidies | veiligheid-bestuur | overig",
     "subType": "specifiek subtype in gewone taal, bijv. 'kredietaanvraag renovatie gemeentelijk vastgoed'",
     "complexiteit": "laag | middel | hoog",
-    "toelichting": "Één zin waarom dit type en deze complexiteit.",
+    "toelichting": "Een zin waarom dit type en deze complexiteit.",
     "toetsprofiel": {
       "beslispunten": "licht | normaal | streng",
       "toelichting": "licht | normaal | streng",
@@ -234,8 +349,11 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
   "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
   "bevoegdheid": {
     "oordeel": "ja | nee | onduidelijk | niet van toepassing",
-    "toelichting": "Korte toelichting op de bevoegdheid van de raad.",
-    "grondslag": "Genoemde grondslag of lege string als deze niet is genoemd"
+    "typeBevoegdheid": "autonoom | medebewind | zienswijze | toestemming | wensen-en-bedenkingen | kaderstelling | controle | benoeming | toelating | adviesrecht | niet duidelijk",
+    "bevoegdOrgaan": "raad | college | burgemeester | commissie | gemeenschappelijke regeling | onduidelijk",
+    "schuwerToets": "Korte toets volgens de Schuwer-lijn: gaat de raad hier echt over of is sprake van college- of burgemeestersbevoegdheid, controle, zienswijze of kennisname?",
+    "grondslag": "Genoemde wettelijke grondslag of lege string",
+    "terminologieRisico": "Bijvoorbeeld: instemmen waar vaststellen nodig is, benoeming waar toelating nodig is, bindend advies zonder duiding"
   },
   "score": {
     "totaal": 74,
@@ -243,7 +361,7 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
       "Beslispunten": "groen",
       "Toelichting": "oranje",
       "Consistentie": "groen",
-      "Financiën": "groen",
+      "Financien": "groen",
       "Rolzuiverheid": "groen",
       "Besluitrijpheid": "oranje",
       "Juridisch": "groen"
@@ -254,9 +372,9 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
 
 Regels:
 - gemeente: naam van de gemeente herkenbaar uit briefhoofd, aanhef of documentopmaak. Alleen de gemeentenaam, bijv. "Ridderkerk". Als onbekend: "Onbekend".
-- classificatie.hoofdType: kies precies één van de genoemde waarden
+- classificatie.hoofdType: kies precies een van de genoemde waarden
 - classificatie.subType: omschrijf het specifieke subtype in gewone taal (geen code, geen enum)
-- classificatie.complexiteit: "laag" voor eenvoudige benoemingen/zienswijzen, "hoog" voor complexe financiële of juridische voorstellen
+- classificatie.complexiteit: "laag" voor eenvoudige benoemingen of zienswijzen, "hoog" voor complexe financiele of juridische voorstellen
 - classificatie.toetsprofiel: bepaal per rubriek de intensiteit; gebruik "niet relevant" alleen als die rubriek echt niet van toepassing is op dit type
 - classificatie.nietToepasselijkeChecks: leg per weggelaten check kort uit waarom
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
@@ -264,8 +382,11 @@ Regels:
 - verbeterpunten: alleen aandachtspunten voor rubrieken met toetsprofiel "normaal" of "streng"; maximaal 6
 - raadsvragen: minimaal 3, maximaal 5; concreet en toegespitst op dit voorstel; bij een puur ceremoniële benoeming mag de lijst 2 vragen bevatten
 - bevoegdheid.oordeel: "ja", "nee", "onduidelijk" of "niet van toepassing"
-- bevoegdheid.toelichting: één zin over wat er staat of ontbreekt
+- bevoegdheid.typeBevoegdheid: kies de best passende juridische categorie; gebruik "niet duidelijk" als het voorstel dit niet scherp maakt
+- bevoegdheid.bevoegdOrgaan: noem het orgaan dat juridisch bevoegd is of vermoedelijk bevoegd is op basis van het voorstel
+- bevoegdheid.schuwerToets: toets expliciet of de raad hier zelf besluit, of dat eerder sprake is van controle, zienswijze, adviesrecht, toestemming, kennisname of een bevoegdheid van college of burgemeester
 - bevoegdheid.grondslag: gevonden wettelijke grondslag of lege string
+- bevoegdheid.terminologieRisico: noem onzuivere terminologie of geef een lege string als die ontbreekt
 - score.totaal: geheel getal 0-100, aangepast aan het toetsprofiel (niet afrekenen op niet-relevante rubrieken)
 - score.onderdelen: per categorie "groen", "oranje" of "rood"; gebruik "groen" als de rubriek niet relevant is
 - rapport: volg exact de structuur Samenvatting, Aandachtspunten, Risico's, Advies; geen aandachtspunten voor rubrieken met toetsprofiel "niet relevant"
@@ -287,7 +408,7 @@ ${truncated}`;
   const content = response.choices?.[0]?.message?.content || "{}";
   try {
     return JSON.parse(content);
-  } catch(e) {
+  } catch (e) {
     return { rapport: content, beslispunten: [], kern: "", verbeterpunten: [] };
   }
 }
@@ -320,7 +441,6 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
 
     const result = await callOpenAI(text);
     res.json(result);
-
   } catch (err) {
     res.status(500).json({ error: err.message || "Onbekende fout." });
   }
