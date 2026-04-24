@@ -183,7 +183,7 @@ function checkLimit(): boolean {
 }
 
 async function extractTextFromPdfBytes(bytes: Uint8Array): Promise<string> {
-  const { default: pdfParse } = await import("pdf-parse/lib/pdf-parse.js");
+  const { default: pdfParse } = await import("pdf-parse");
   const buffer = Buffer.from(bytes);
   const data = await pdfParse(buffer);
   return data.text;
