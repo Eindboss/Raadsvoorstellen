@@ -201,6 +201,11 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
   "kern": "Één of twee zinnen over waar dit voorstel over gaat en wat de kern van het verzoek is.",
   "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
   "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
+  "bevoegdheid": {
+    "oordeel": "ja",
+    "toelichting": "Het voorstel verwijst naar artikel 4 van de Gemeentewet als grondslag voor de bevoegdheid van de raad.",
+    "grondslag": "Artikel 4 Gemeentewet"
+  },
   "score": {
     "totaal": 74,
     "onderdelen": {
@@ -218,11 +223,14 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
 
 Regels:
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
-- kern: neutrale samenvatting van het voorstel in gewone taal
-- verbeterpunten: concrete, herstelbare punten als korte bullets (max 6)
+- kern: publiekssamenvatting in B1-taalniveau — korte zinnen, geen jargon, geen afkortingen. Schrijf alsof je het uitlegt aan een geïnteresseerde burger die het voorstel niet heeft gelezen. Max 3 zinnen.
+- verbeterpunten: concrete, herstelbare punten als korte bullets in B1-taal (max 6, geen jargon)
 - raadsvragen: de 3 meest voor de hand liggende kritische vragen die een raadslid aan het college zal stellen over dit voorstel
 - score.totaal: geheel getal 0-100 gebaseerd op het aantal en ernst van de aandachtspunten (100 = perfect, 0 = onbruikbaar)
 - score.onderdelen: per categorie "groen" (geen problemen), "oranje" (aandachtspunten) of "rood" (herstel vereist)
+- bevoegdheid.oordeel: "ja" (raadsbevoegdheid duidelijk onderbouwd), "onduidelijk" (twijfelachtig of onvolledig), of "nee" (ontbreekt volledig)
+- bevoegdheid.toelichting: één zin over wat er staat of ontbreekt
+- bevoegdheid.grondslag: de gevonden wettelijke grondslag (wet, artikel, verordening) of "niet gevonden"
 - rapport: het volledige toetsrapport volgens de rubric
 
 ---

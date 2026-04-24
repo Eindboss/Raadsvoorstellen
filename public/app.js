@@ -98,6 +98,18 @@ function renderResult(data) {
   document.getElementById("vragen-list").innerHTML =
     (data.raadsvragen || []).map(v => `<li>${escHtml(v)}</li>`).join("");
 
+  // Bevoegdheid
+  const bev = data.bevoegdheid || {};
+  const oordeel = bev.oordeel || "onduidelijk";
+  const labels = { ja: "✓ Bevoegdheid aangetoond", onduidelijk: "⚠ Onduidelijk", nee: "✗ Ontbreekt" };
+  document.getElementById("bevoegdheid-content").innerHTML = `
+    <div class="bevoegdheid-oordeel ${oordeel}">${labels[oordeel] || oordeel}</div>
+    <p class="bevoegdheid-toelichting">${escHtml(bev.toelichting || "")}</p>
+    ${bev.grondslag && bev.grondslag !== "niet gevonden"
+      ? `<p class="bevoegdheid-grondslag">Grondslag: ${escHtml(bev.grondslag)}</p>`
+      : ""}
+  `;
+
   // Rapport
   document.getElementById("rapport-content").innerHTML =
     formatRapport(data.rapport || "");

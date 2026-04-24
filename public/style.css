@@ -330,30 +330,12 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 }
 
 /* Card plaatsing */
-.card-beslispunten {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.card-kern {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.card-vragen {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.card-rapport {
-  grid-column: 1 / 3;
-  grid-row: 2;
-}
-
-.card-verbeter {
-  grid-column: 3;
-  grid-row: 2;
-}
+.card-beslispunten { grid-column: 1; grid-row: 1; }
+.card-kern         { grid-column: 2; grid-row: 1; }
+.card-vragen       { grid-column: 3; grid-row: 1; }
+.card-rapport      { grid-column: 1 / 3; grid-row: 2; }
+.card-side         { grid-column: 3; grid-row: 2; display: flex; flex-direction: column; gap: 0.75rem; background: none; border: none; padding: 0; }
+.card-side .dash-card { flex: 1; }
 
 /* Card content */
 .dash-card ol,
@@ -400,6 +382,37 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 .card-vragen ol {
   font-style: italic;
   color: var(--accent);
+}
+
+/* Bevoegdheid */
+.bevoegdheid-oordeel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 20px;
+  margin-bottom: 0.6rem;
+}
+
+.bevoegdheid-oordeel.ja         { background: var(--green-bg); color: var(--green); }
+.bevoegdheid-oordeel.onduidelijk { background: var(--orange-bg); color: var(--orange); }
+.bevoegdheid-oordeel.nee        { background: #fef2f2; color: #991b1b; }
+
+.bevoegdheid-toelichting {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+
+.bevoegdheid-grondslag {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
 }
 
 /* Rapport */
