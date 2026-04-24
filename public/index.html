@@ -37,6 +37,19 @@
         <button id="submit-btn" class="btn-primary">Toets uitvoeren</button>
       </div>
 
+      <!-- Voorstel-info: gemeente + type, verschijnt na analyse -->
+      <div id="voorstel-info" class="voorstel-info hidden">
+        <div id="gemeente-badge" class="gemeente-badge hidden">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;opacity:.7">
+            <path d="M8 1L1 5v1h14V5L8 1zM2 7v6h3v-4h2v4h2v-4h2v4h3V7H2z" fill="white"/>
+          </svg>
+          <span id="gemeente-naam"></span>
+        </div>
+        <div id="type-badge" class="type-badge hidden">
+          <span id="type-label"></span>
+        </div>
+      </div>
+
       <div id="status-idle" class="status-msg">
         <p>Upload een raadsvoorstel om te beginnen.</p>
       </div>
@@ -63,15 +76,6 @@
         </div>
         <div class="score-label" id="score-label">Beoordeeld</div>
         <div class="score-cats" id="score-cats"></div>
-      </div>
-
-      <div id="gemeente-badge" class="gemeente-badge hidden">
-        <span class="gemeente-icon">🏛</span>
-        <span id="gemeente-naam"></span>
-      </div>
-
-      <div id="type-badge" class="type-badge hidden">
-        <span id="type-label"></span>
       </div>
 
       <div class="left-footer">

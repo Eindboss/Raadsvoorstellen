@@ -100,16 +100,20 @@ function renderResult(data) {
     ? vragen.map(v => `<li>${escHtml(v)}</li>`).join("")
     : `<li class="vragen-leeg">Geen vragen gegenereerd voor dit type voorstel.</li>`;
 
-  // Gemeente
-  if (data.gemeente && data.gemeente !== "Onbekend") {
+  // Gemeente + type voorstel
+  const heeftGemeente = data.gemeente && data.gemeente !== "Onbekend";
+  const heeftType = !!data.typeVoorstel;
+
+  if (heeftGemeente) {
     document.getElementById("gemeente-naam").textContent = data.gemeente;
     document.getElementById("gemeente-badge").classList.remove("hidden");
   }
-
-  // Type voorstel
-  if (data.typeVoorstel) {
+  if (heeftType) {
     document.getElementById("type-label").textContent = data.typeVoorstel.replace(/-/g, "\u2011");
     document.getElementById("type-badge").classList.remove("hidden");
+  }
+  if (heeftGemeente || heeftType) {
+    document.getElementById("voorstel-info").classList.remove("hidden");
   }
 
   // Bevoegdheid
