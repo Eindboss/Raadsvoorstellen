@@ -4,6 +4,9 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const fetch = require("node-fetch");
 const path = require("path");
+const { OpenAI } = require("openai");
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -185,35 +188,22 @@ Maximaal twee zinnen per risico.
 Advies
 Eén of twee concrete herstelacties, geordend naar prioriteit.`;
 
-async function callGemini(text) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY niet geconfigureerd.");
+async function callOpenAI(text) {
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
 
   const truncated = text.slice(0, 60000);
 
-  const body = {
-    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{
-      role: "user",
-      parts: [{
-        text: `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie.\n\n---\n\n${truncated}`
-      }]
-    }],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
-  };
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.1,
+    max_tokens: 2048,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie.\n\n---\n\n${truncated}` }
+    ]
+  });
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${apiKey}`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
-  );
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini fout: ${res.status} ${err.slice(0, 200)}`);
-  }
-
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Geen resultaat ontvangen.";
+  return response.choices?.[0]?.message?.content || "Geen resultaat ontvangen.";
 }
 
 // API endpoint
@@ -242,7 +232,7 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
       return res.status(422).json({ error: "De PDF bevat te weinig tekst om te analyseren." });
     }
 
-    const result = await callGemini(text);
+    const result = await callOpenAI(text);
     res.json({ result });
 
   } catch (err) {
