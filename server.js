@@ -52,6 +52,15 @@ Je doet geen aannames.
 Je verifieert bevindingen over bijlagen altijd voordat je ze opneemt.
 Twijfelgevallen signaleer je alleen als aandachtspunt wanneer voldoende aannemelijk is dat het punt de kwaliteit of besluitrijpheid raakt.
 
+Classificatie en toetsprofiel
+
+Voordat je aandachtspunten formuleert, bepaal je per rubriek of deze voor dit type voorstel niet relevant, licht relevant, normaal relevant of zwaar relevant is.
+Formuleer geen aandachtspunt binnen een rubriek die niet relevant is, tenzij het voorstel zelf die rubriek toch relevant maakt.
+Een eenvoudige benoeming vereist geen financiële of juridische dieptetoets.
+Een kredietaanvraag of grondexploitatie vereist een strenge financiële toets.
+Een verordening vereist een strenge juridische toets en controle van interne verwijzingen.
+Een zienswijze vereist controle op de grondslag van de raadsbevoegdheid.
+
 Rubric
 
 1. Beslispunten
@@ -194,16 +203,31 @@ async function callOpenAI(text) {
   const truncated = text.slice(0, 60000);
 
   const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
-Voer een strikte formele toets uit.
-Bepaal eerst het type voorstel en pas de beoordeling daarop aan.
-Wees streng op beslispunten, bevoegdheid, consistentie en besluitrijpheid.
-Wees terughoudend met financiële opmerkingen en risico's als die voor dit type voorstel niet relevant zijn.
-Genereer altijd minimaal 3 concrete raadsvragen, toegespitst op dit specifieke voorstel.
+Stap 1: classificeer het voorstel volledig (hoofdType, subType, complexiteit, toetsprofiel).
+Stap 2: voer de toets uit waarbij je per rubriek het toetsprofiel toepast — formuleer geen aandachtspunten voor rubrieken die niet relevant zijn.
+Stap 3: genereer altijd minimaal 3 concrete raadsvragen toegespitst op dit voorstel.
 
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
   "gemeente": "Amsterdam",
-  "typeVoorstel": "benoeming | zienswijze | verordening | financieel | beleid | beleidskader | ruimtelijk-vastgoed | motie-afdoening | procedureel | overig",
+  "classificatie": {
+    "hoofdType": "personeel-organisatie | zienswijze-verbonden-partijen | regelgeving | financien-penc | ruimte-grond-vastgoed | beleid-kaderstelling | controle-moties-toezeggingen | bedrijfsvoering-informatie | sociaal-domein-subsidies | veiligheid-bestuur | overig",
+    "subType": "specifiek subtype in gewone taal, bijv. 'kredietaanvraag renovatie gemeentelijk vastgoed'",
+    "complexiteit": "laag | middel | hoog",
+    "toelichting": "Één zin waarom dit type en deze complexiteit.",
+    "toetsprofiel": {
+      "beslispunten": "licht | normaal | streng",
+      "toelichting": "licht | normaal | streng",
+      "consistentie": "licht | normaal | streng",
+      "bijlagen": "niet relevant | licht | normaal | streng",
+      "financien": "niet relevant | licht | normaal | streng",
+      "rolzuiverheid": "licht | normaal | streng",
+      "besluitrijpheid": "normaal | streng",
+      "juridisch": "licht | normaal | streng",
+      "proces": "licht | normaal | streng"
+    },
+    "nietToepasselijkeChecks": ["omschrijving van wat niet getoetst wordt en waarom"]
+  },
   "beslispunten": ["beslispunt 1", "beslispunt 2"],
   "kern": "Publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen.",
   "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
@@ -230,18 +254,21 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
 
 Regels:
 - gemeente: naam van de gemeente herkenbaar uit briefhoofd, aanhef of documentopmaak. Alleen de gemeentenaam, bijv. "Ridderkerk". Als onbekend: "Onbekend".
-- typeVoorstel: kies één van de genoemde types; gebruik "beleid" voor concrete beleidsvoorstellen en "beleidskader" alleen voor strategische kaders/visiedocumenten
+- classificatie.hoofdType: kies precies één van de genoemde waarden
+- classificatie.subType: omschrijf het specifieke subtype in gewone taal (geen code, geen enum)
+- classificatie.complexiteit: "laag" voor eenvoudige benoemingen/zienswijzen, "hoog" voor complexe financiële of juridische voorstellen
+- classificatie.toetsprofiel: bepaal per rubriek de intensiteit; gebruik "niet relevant" alleen als die rubriek echt niet van toepassing is op dit type
+- classificatie.nietToepasselijkeChecks: leg per weggelaten check kort uit waarom
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
 - kern: publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen, geen jargon, geen afkortingen
-- verbeterpunten: alleen concrete herstelpunten, maximaal 6
-- raadsvragen: formuleer altijd minimaal 3 en maximaal 5 vragen die een kritisch raadslid bij dit specifieke voorstel zou stellen; alleen bij puur ceremoniële benoemingen mag de lijst korter zijn; de vragen moeten concreet zijn en aansluiten bij de inhoud van dit voorstel
+- verbeterpunten: alleen aandachtspunten voor rubrieken met toetsprofiel "normaal" of "streng"; maximaal 6
+- raadsvragen: minimaal 3, maximaal 5; concreet en toegespitst op dit voorstel; bij een puur ceremoniële benoeming mag de lijst 2 vragen bevatten
 - bevoegdheid.oordeel: "ja", "nee", "onduidelijk" of "niet van toepassing"
 - bevoegdheid.toelichting: één zin over wat er staat of ontbreekt
 - bevoegdheid.grondslag: gevonden wettelijke grondslag of lege string
-- score.totaal: geheel getal 0-100 gebaseerd op aantal, ernst en type voorstel
-- score.onderdelen: per categorie "groen", "oranje" of "rood"
-- financiën mag groen zijn als financiële gevolgen voor dit type voorstel niet relevant zijn
-- rapport: volg exact de structuur Samenvatting, Aandachtspunten, Risico's, Advies
+- score.totaal: geheel getal 0-100, aangepast aan het toetsprofiel (niet afrekenen op niet-relevante rubrieken)
+- score.onderdelen: per categorie "groen", "oranje" of "rood"; gebruik "groen" als de rubriek niet relevant is
+- rapport: volg exact de structuur Samenvatting, Aandachtspunten, Risico's, Advies; geen aandachtspunten voor rubrieken met toetsprofiel "niet relevant"
 
 Concept-raadsvoorstel:
 ${truncated}`;

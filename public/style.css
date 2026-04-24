@@ -210,16 +210,53 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   padding: 0.45rem 0.75rem;
 }
 
-/* Type voorstel badge */
-.type-badge {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.55);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0 0.2rem;
+/* Classificatie blok */
+.classificatie-blok {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
 }
+
+.classificatie-hoofd-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.classificatie-hoofd {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.3;
+}
+
+.classificatie-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.complex-pill {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.complex-pill.laag   { background: rgba(34,197,94,0.2);  color: #86efac; }
+.complex-pill.middel { background: rgba(245,158,11,0.2); color: #fcd34d; }
+.complex-pill.hoog   { background: rgba(239,68,68,0.2);  color: #fca5a5; }
 
 /* Score panel */
 .score-panel {

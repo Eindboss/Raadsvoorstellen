@@ -37,7 +37,7 @@
         <button id="submit-btn" class="btn-primary">Toets uitvoeren</button>
       </div>
 
-      <!-- Voorstel-info: gemeente + type, verschijnt na analyse -->
+      <!-- Voorstel-info: gemeente + classificatie, verschijnt na analyse -->
       <div id="voorstel-info" class="voorstel-info hidden">
         <div id="gemeente-badge" class="gemeente-badge hidden">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;opacity:.7">
@@ -45,8 +45,12 @@
           </svg>
           <span id="gemeente-naam"></span>
         </div>
-        <div id="type-badge" class="type-badge hidden">
-          <span id="type-label"></span>
+        <div id="classificatie-blok" class="classificatie-blok hidden">
+          <div class="classificatie-hoofd-row">
+            <span id="classificatie-hoofd" class="classificatie-hoofd"></span>
+            <span id="classificatie-complex" class="complex-pill"></span>
+          </div>
+          <div id="classificatie-sub" class="classificatie-sub"></div>
         </div>
       </div>
 
