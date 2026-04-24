@@ -75,7 +75,7 @@
       </div>
 
       <div class="left-footer">
-        <p>Beoordeelt uitsluitend formele kwaliteit — niet de politieke inhoud.</p>
+        Beoordeelt uitsluitend formele kwaliteit&mdash;niet de politieke inhoud.
       </div>
     </aside>
 
@@ -84,9 +84,23 @@
 
       <!-- Lege staat -->
       <div id="empty-state" class="empty-state">
-        <div class="empty-icon">⚖️</div>
+        <svg class="empty-icon-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="6" width="38" height="50" rx="3" stroke="#c8d4e0" stroke-width="2.5"/>
+          <line x1="18" y1="18" x2="44" y2="18" stroke="#c8d4e0" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="25" x2="44" y2="25" stroke="#c8d4e0" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="32" x2="36" y2="32" stroke="#c8d4e0" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="46" cy="46" r="11" fill="#1a3a5c"/>
+          <polyline points="40,46 44,50 52,42" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
         <h2>Is uw raadsvoorstel klaar voor de raad?</h2>
         <p>Upload een PDF of voer een URL in om een formele kwaliteitstoets te starten op volledigheid, consistentie en besluitrijpheid.</p>
+        <div class="empty-checks">
+          <span>Beslispunten</span>
+          <span>Toelichting</span>
+          <span>Consistentie</span>
+          <span>Bevoegdheid</span>
+          <span>Besluitrijpheid</span>
+        </div>
       </div>
 
       <!-- Resultaat grid -->

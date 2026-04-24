@@ -221,8 +221,8 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 /* Score panel */
 .score-panel {
-  margin-top: auto;
-  margin-bottom: 1rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -286,9 +286,12 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 .left-footer {
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.3);
-  line-height: 1.4;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.25);
+  line-height: 1.5;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 /* Dashboard main */
@@ -309,21 +312,50 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   justify-content: center;
   text-align: center;
   color: var(--muted);
-  max-width: 480px;
+  max-width: 440px;
   margin: 0 auto;
+  gap: 0;
 }
 
-.empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.empty-icon-svg {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1.5rem;
+}
 
 .empty-state h2 {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--ink);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.35;
 }
 
-.empty-state p {
+.empty-state > p {
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 1.75rem;
+}
+
+.empty-checks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.empty-checks span {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.2rem 0.7rem;
+  background: var(--white);
+  letter-spacing: 0.02em;
 }
 
 /* Result grid */
