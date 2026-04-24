@@ -1,14 +1,31 @@
 const tabs = document.querySelectorAll(".tab");
 const pdfInput = document.getElementById("pdf-input");
 const urlInput = document.getElementById("url-input");
+const pdfFileInput = document.getElementById("pdf-file");
+const fileNameEl = document.getElementById("file-name");
 const submitBtn = document.getElementById("submit-btn");
-const resultSection = document.getElementById("result-section");
-const errorSection = document.getElementById("error-section");
+const statusIdle = document.getElementById("status-idle");
+const statusLoading = document.getElementById("status-loading");
+const statusError = document.getElementById("status-error");
 const errorMessage = document.getElementById("error-message");
-const loadingSection = document.getElementById("loading-section");
-const resetBtn = document.getElementById("reset-btn");
+const emptyState = document.getElementById("empty-state");
+const resultGrid = document.getElementById("result-grid");
 
 let mode = "pdf";
+
+// Klik op file-name opent file dialog
+fileNameEl.addEventListener("click", () => pdfFileInput.click());
+
+pdfFileInput.addEventListener("change", () => {
+  const file = pdfFileInput.files[0];
+  if (file) {
+    fileNameEl.textContent = file.name;
+    fileNameEl.classList.add("has-file");
+  } else {
+    fileNameEl.textContent = "Geen bestand gekozen";
+    fileNameEl.classList.remove("has-file");
+  }
+});
 
 tabs.forEach(tab => {
   tab.addEventListener("click", () => {
@@ -21,15 +38,14 @@ tabs.forEach(tab => {
 });
 
 submitBtn.addEventListener("click", async () => {
-  hideAll();
-  loadingSection.classList.remove("hidden");
+  setStatus("loading");
   submitBtn.disabled = true;
 
   try {
     const formData = new FormData();
 
     if (mode === "pdf") {
-      const file = document.getElementById("pdf-file").files[0];
+      const file = pdfFileInput.files[0];
       if (!file) throw new Error("Selecteer een PDF-bestand.");
       formData.append("pdf", file);
     } else {
@@ -43,80 +59,81 @@ submitBtn.addEventListener("click", async () => {
 
     if (!res.ok) throw new Error(data.error || "Er ging iets mis.");
 
-    loadingSection.classList.add("hidden");
+    setStatus("idle");
     renderResult(data);
-    resultSection.classList.remove("hidden");
 
   } catch (err) {
-    loadingSection.classList.add("hidden");
-    errorMessage.textContent = err.message;
-    errorSection.classList.remove("hidden");
+    setStatus("error", err.message);
   } finally {
     submitBtn.disabled = false;
   }
 });
 
-resetBtn.addEventListener("click", () => {
-  hideAll();
-  document.getElementById("pdf-file").value = "";
-  document.getElementById("pdf-url").value = "";
-});
+function setStatus(state, msg) {
+  statusIdle.classList.add("hidden");
+  statusLoading.classList.add("hidden");
+  statusError.classList.add("hidden");
+
+  if (state === "idle") statusIdle.classList.remove("hidden");
+  if (state === "loading") statusLoading.classList.remove("hidden");
+  if (state === "error") {
+    errorMessage.textContent = msg || "Onbekende fout.";
+    statusError.classList.remove("hidden");
+  }
+}
 
 function renderResult(data) {
-  // Rapport
-  const rapportEl = document.getElementById("rapport-content");
-  rapportEl.innerHTML = formatRapport(data.rapport || "");
-
   // Beslispunten
-  const beslisEl = document.getElementById("beslispunten-list");
-  beslisEl.innerHTML = (data.beslispunten || [])
-    .map(p => `<li>${escHtml(p)}</li>`).join("");
+  document.getElementById("beslispunten-list").innerHTML =
+    (data.beslispunten || []).map(p => `<li>${escHtml(p)}</li>`).join("");
 
   // Kern
   document.getElementById("kern-text").textContent = data.kern || "";
 
   // Verbeterpunten
-  const verbeterEl = document.getElementById("verbeter-list");
-  verbeterEl.innerHTML = (data.verbeterpunten || [])
-    .map(p => `<li>${escHtml(p)}</li>`).join("");
+  document.getElementById("verbeter-list").innerHTML =
+    (data.verbeterpunten || []).map(p => `<li>${escHtml(p)}</li>`).join("");
 
   // Raadsvragen
-  const vragenEl = document.getElementById("vragen-list");
-  vragenEl.innerHTML = (data.raadsvragen || [])
-    .map(v => `<li>${escHtml(v)}</li>`).join("");
+  document.getElementById("vragen-list").innerHTML =
+    (data.raadsvragen || []).map(v => `<li>${escHtml(v)}</li>`).join("");
+
+  // Rapport
+  document.getElementById("rapport-content").innerHTML =
+    formatRapport(data.rapport || "");
+
+  emptyState.classList.add("hidden");
+  resultGrid.classList.remove("hidden");
 }
 
 function formatRapport(tekst) {
   const secties = ["Samenvatting", "Aandachtspunten", "Risico's", "Advies"];
-  let html = tekst;
+  const parts = [];
+  let remaining = tekst;
 
-  secties.forEach(sectie => {
-    html = html.replace(
-      new RegExp(`(^|\\n)(${sectie})\\n`, "g"),
-      `$1<div class="rapport-sectie"><h4>${sectie}</h4><p>`
-    );
+  secties.forEach((sectie, i) => {
+    const idx = remaining.indexOf(sectie);
+    if (idx === -1) return;
+    const before = remaining.slice(0, idx).trim();
+    if (before && i === 0) parts.push(`<p>${escHtml(before)}</p>`);
+    const nextIdx = secties.slice(i + 1).reduce((acc, s) => {
+      const pos = remaining.indexOf(s, idx + sectie.length);
+      return pos !== -1 && (acc === -1 || pos < acc) ? pos : acc;
+    }, -1);
+    const content = nextIdx !== -1
+      ? remaining.slice(idx + sectie.length, nextIdx).trim()
+      : remaining.slice(idx + sectie.length).trim();
+    parts.push(`<div class="rapport-sectie"><h4>${sectie}</h4><p>${escHtml(content)}</p></div>`);
+    remaining = nextIdx !== -1 ? remaining.slice(nextIdx) : "";
   });
 
-  // Sluit open <p> tags
-  let count = (html.match(/<div class="rapport-sectie">/g) || []).length;
-  for (let i = 0; i < count; i++) {
-    html = html.replace(/(<div class="rapport-sectie"><h4>[^<]+<\/h4><p>)([\s\S]*?)(<div class="rapport-sectie">|$)/, (m, open, content, next) => {
-      return open + escHtml(content).replace(/\n/g, "<br>") + "</p></div>" + next;
-    });
-  }
-
-  return `<div>${html}</div>`;
+  return parts.join("") || `<p>${escHtml(tekst)}</p>`;
 }
 
 function escHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function hideAll() {
-  resultSection.classList.add("hidden");
-  errorSection.classList.add("hidden");
-  loadingSection.classList.add("hidden");
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
 }

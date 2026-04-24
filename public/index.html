@@ -10,95 +10,94 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <div class="logo">Raadsvoorstel<span>Kwaliteitstoets</span></div>
-    </div>
-  </header>
 
-  <main>
-    <section class="hero">
-      <h1>Is uw raadsvoorstel klaar voor de raad?</h1>
-      <p class="lead">Upload een raadsvoorstel als PDF of voer een URL in. U ontvangt binnen een minuut een formele kwaliteitstoets op volledigheid, consistentie en besluitrijpheid.</p>
-    </section>
+  <div class="shell">
 
-    <section class="form-section">
-      <div class="card">
+    <!-- Sidebar links -->
+    <aside class="left-panel">
+      <div class="brand">Raadsvoorstel<br><strong>Kwaliteitstoets</strong></div>
+
+      <div class="upload-section">
         <div class="tabs">
-          <button class="tab active" data-mode="pdf">PDF uploaden</button>
-          <button class="tab" data-mode="url">URL invoeren</button>
+          <button class="tab active" data-mode="pdf">PDF</button>
+          <button class="tab" data-mode="url">URL</button>
         </div>
 
         <div id="pdf-input" class="input-group">
-          <label for="pdf-file">PDF-bestand</label>
+          <label for="pdf-file">Bestand kiezen</label>
           <input type="file" id="pdf-file" accept=".pdf" />
+          <span id="file-name" class="file-name">Geen bestand gekozen</span>
         </div>
 
         <div id="url-input" class="input-group hidden">
-          <label for="pdf-url">URL van het raadsvoorstel (PDF)</label>
+          <label for="pdf-url">URL (PDF)</label>
           <input type="url" id="pdf-url" placeholder="https://..." />
         </div>
 
-        <button id="submit-btn" class="btn-primary">Kwaliteitstoets uitvoeren</button>
+        <button id="submit-btn" class="btn-primary">Toets uitvoeren</button>
       </div>
-    </section>
 
-    <section id="loading-section" class="hidden">
-      <div class="loading-card">
+      <div id="status-idle" class="status-msg">
+        <p>Upload een raadsvoorstel om te beginnen.</p>
+      </div>
+
+      <div id="status-loading" class="status-msg hidden">
         <div class="spinner"></div>
-        <p>Raadsvoorstel wordt geanalyseerd&hellip;<br/><small>Dit duurt ongeveer 30 seconden.</small></p>
+        <p>Analyseren&hellip;<br><small>±30 seconden</small></p>
       </div>
-    </section>
 
-    <section id="error-section" class="hidden">
-      <div class="error-card">
+      <div id="status-error" class="status-msg error hidden">
         <p id="error-message"></p>
       </div>
-    </section>
 
-    <section id="result-section" class="hidden">
-      <div class="result-layout">
+      <div class="left-footer">
+        <p>Beoordeelt uitsluitend formele kwaliteit — niet de politieke inhoud.</p>
+      </div>
+    </aside>
 
-        <!-- Links: volledig rapport -->
-        <div class="rapport-col">
-          <div class="card result-card">
-            <h2>Kwaliteitstoets</h2>
-            <div id="rapport-content"></div>
-          </div>
-          <button id="reset-btn" class="btn-secondary">Nieuw raadsvoorstel toetsen</button>
+    <!-- Dashboard rechts -->
+    <main class="dashboard" id="dashboard">
+
+      <!-- Lege staat -->
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">⚖️</div>
+        <h2>Is uw raadsvoorstel klaar voor de raad?</h2>
+        <p>Upload een PDF of voer een URL in om een formele kwaliteitstoets te starten op volledigheid, consistentie en besluitrijpheid.</p>
+      </div>
+
+      <!-- Resultaat grid -->
+      <div id="result-grid" class="result-grid hidden">
+
+        <div class="dash-card card-beslispunten">
+          <div class="card-label">Beslispunten</div>
+          <ol id="beslispunten-list"></ol>
         </div>
 
-        <!-- Rechts: sidebar -->
-        <aside class="sidebar-col">
+        <div class="dash-card card-kern">
+          <div class="card-label">Kern van het voorstel</div>
+          <p id="kern-text"></p>
+        </div>
 
-          <div class="sidebar-block">
-            <h3>Beslispunten</h3>
-            <ol id="beslispunten-list"></ol>
-          </div>
+        <div class="dash-card card-rapport">
+          <div class="card-label">Kwaliteitstoets</div>
+          <div id="rapport-content" class="rapport-scroll"></div>
+        </div>
 
-          <div class="sidebar-block">
-            <h3>Kern van het voorstel</h3>
-            <p id="kern-text"></p>
-          </div>
+        <div class="dash-card card-verbeter">
+          <div class="card-label">Verbeterpunten</div>
+          <ul id="verbeter-list"></ul>
+        </div>
 
-          <div class="sidebar-block verbeter-block">
-            <h3>Verbeterpunten</h3>
-            <ul id="verbeter-list"></ul>
-          </div>
+        <div class="dash-card card-vragen">
+          <div class="card-label">Verwachte raadsvragen</div>
+          <ol id="vragen-list"></ol>
+        </div>
 
-          <div class="sidebar-block vragen-block">
-            <h3>Verwachte raadsvragen</h3>
-            <ol id="vragen-list"></ol>
-          </div>
-
-        </aside>
       </div>
-    </section>
-  </main>
 
-  <footer>
-    <p>De toets beoordeelt uitsluitend formele kwaliteit &mdash; niet de politieke inhoud van het voorstel.</p>
-  </footer>
+    </main>
+
+  </div>
 
   <script src="app.js"></script>
 </body>
