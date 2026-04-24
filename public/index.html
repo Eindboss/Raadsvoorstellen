@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raadsvoorstel Kwaliteitstoets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">Raadsvoorstel<span>Kwaliteitstoets</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Is uw raadsvoorstel klaar voor de raad?</h1>
+      <p class="lead">Upload een raadsvoorstel als PDF of voer een URL in. U ontvangt binnen een minuut een formele kwaliteitstoets op volledigheid, consistentie en besluitrijpheid.</p>
+    </section>
+
+    <section class="form-section">
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" data-mode="pdf">PDF uploaden</button>
+          <button class="tab" data-mode="url">URL invoeren</button>
+        </div>
+
+        <div id="pdf-input" class="input-group">
+          <label for="pdf-file">PDF-bestand</label>
+          <input type="file" id="pdf-file" accept=".pdf" />
+        </div>
+
+        <div id="url-input" class="input-group hidden">
+          <label for="pdf-url">URL van het raadsvoorstel (PDF)</label>
+          <input type="url" id="pdf-url" placeholder="https://..." />
+        </div>
+
+        <button id="submit-btn" class="btn-primary">Kwaliteitstoets uitvoeren</button>
+      </div>
+    </section>
+
+    <section id="result-section" class="hidden">
+      <div class="card result-card">
+        <h2>Resultaat</h2>
+        <div id="result-content"></div>
+        <button id="reset-btn" class="btn-secondary">Nieuw raadsvoorstel toetsen</button>
+      </div>
+    </section>
+
+    <section id="error-section" class="hidden">
+      <div class="error-card">
+        <p id="error-message"></p>
+      </div>
+    </section>
+
+    <section id="loading-section" class="hidden">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <p>Raadsvoorstel wordt geanalyseerd&hellip;<br/><small>Dit duurt ongeveer 30 seconden.</small></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>De toets beoordeelt uitsluitend formele kwaliteit &mdash; niet de politieke inhoud van het voorstel.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

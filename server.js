@@ -1,4 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
+const express = require("express");
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const fetch = require("node-fetch");
+const path = require("path");
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+// Daily limit
+const DAILY_LIMIT = parseInt(process.env.DAILY_LIMIT || "100");
+let dailyCount = 0;
+let lastReset = new Date().toDateString();
+
+function checkLimit() {
+  const today = new Date().toDateString();
+  if (today !== lastReset) {
+    dailyCount = 0;
+    lastReset = today;
+  }
+  if (dailyCount >= DAILY_LIMIT) return false;
+  dailyCount++;
+  return true;
+}
 
 const SYSTEM_PROMPT = `Rol
 
@@ -123,18 +149,12 @@ Controleer of de titel duidelijk is, niet onnodig lang is, geen afkortingen beva
 Werkinstructies
 
 De formulering "vast te stellen en te versturen" is gangbaar bij zienswijzen op begrotingen van gemeenschappelijke regelingen en behoeft geen nadere precisering.
-
 Beslispunten hoeven geen deadline of geadresseerde te bevatten.
-
 De beslispunten worden letterlijk herhaald onder het kopje Samenvatting in de output.
-
 Maak geen opmerking over het ontbreken van een wettelijke grondslag in Gelet op bij het raadsbesluit.
-
-Bij een zienswijzeraadsvoorstel controleer je wel of in het raadsvoorstel (toelichting) een juridische grondslag is benoemd waaruit blijkt dat de raad bevoegd is om een zienswijze in te dienen. Signaleer alleen als geen enkele wettelijke of regelingstechnische grondslag wordt genoemd én daardoor onduidelijk blijft waarom de raad bevoegd is.
-
+Bij een zienswijzeraadsvoorstel controleer je wel of in het raadsvoorstel een juridische grondslag is benoemd waaruit blijkt dat de raad bevoegd is om een zienswijze in te dienen.
 Beoordeel uitsluitend het raadsvoorstel en de raadsbeslispunten, niet het collegevoorstel.
-
-Een zienswijzebrief die als concept in .docx is bijgevoegd, is gebruikelijk en correct. Dat signaleer je niet.
+Een zienswijzebrief die als concept in .docx is bijgevoegd, is gebruikelijk en correct.
 
 Gedragsregels
 
@@ -156,7 +176,6 @@ Alleen punten die herstel vereisen.
 Per aandachtspunt: eerst het probleem in één of twee zinnen, daarna het herstel in één zin.
 Geen rubriekaanduidingen tussen haakjes.
 Kritieke punten eerst, daarna overige punten.
-Neem alleen punten op die de kwaliteit van het voorstel of de besluitvorming raken.
 
 Risico's
 Alleen indien van toepassing.
@@ -165,123 +184,70 @@ Maximaal twee zinnen per risico.
 Advies
 Eén of twee concrete herstelacties, geordend naar prioriteit.`;
 
-const DAILY_LIMIT = parseInt(process.env.DAILY_LIMIT || "100");
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-
-let dailyCount = 0;
-let lastReset = new Date().toDateString();
-
-function checkLimit(): boolean {
-  const today = new Date().toDateString();
-  if (today !== lastReset) {
-    dailyCount = 0;
-    lastReset = today;
-  }
-  if (dailyCount >= DAILY_LIMIT) return false;
-  dailyCount++;
-  return true;
-}
-
-async function extractTextFromPdfBytes(bytes: Uint8Array): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfParseModule = await import("pdf-parse") as any;
-  const pdfParse = pdfParseModule.default ?? pdfParseModule;
-  const buffer = Buffer.from(bytes);
-  const data = await pdfParse(buffer);
-  return data.text;
-}
-
-async function fetchPdfFromUrl(url: string): Promise<Uint8Array> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`Kon URL niet ophalen (${res.status}).`);
-  const contentType = res.headers.get("content-type") || "";
-  if (!contentType.includes("pdf") && !url.toLowerCase().endsWith(".pdf")) {
-    throw new Error("De URL verwijst niet naar een PDF-bestand.");
-  }
-  const buffer = await res.arrayBuffer();
-  return new Uint8Array(buffer);
-}
-
-async function callGemini(text: string): Promise<string> {
-  if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY niet geconfigureerd.");
+async function callGemini(text) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY niet geconfigureerd.");
 
   const truncated = text.slice(0, 60000);
 
   const body = {
     system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie. Maak geen opmerkingen over het ontbreken van een wettelijke grondslag in Gelet op bij het raadsbesluit. Controleer alleen bij een zienswijzeraadsvoorstel of in het raadsvoorstel zelf de wettelijke grondslag voor de zienswijzebevoegdheid is genoemd.\n\n---\n\n${truncated}`,
-          },
-        ],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.1,
-      maxOutputTokens: 2048,
-    },
+    contents: [{
+      role: "user",
+      parts: [{
+        text: `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie.\n\n---\n\n${truncated}`
+      }]
+    }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
   };
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(60000),
-    }
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${apiKey}`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
   );
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Gemini API fout: ${res.status} ${err.slice(0, 200)}`);
+    throw new Error(`Gemini fout: ${res.status} ${err.slice(0, 200)}`);
   }
 
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "Geen resultaat ontvangen.";
 }
 
-export async function POST(req: NextRequest) {
+// API endpoint
+app.post("/api/toets", upload.single("pdf"), async (req, res) => {
   if (!checkLimit()) {
-    return NextResponse.json(
-      { error: "Het dagelijkse maximum aantal toetsen is bereikt. Probeer morgen opnieuw." },
-      { status: 429 }
-    );
+    return res.status(429).json({ error: "Het dagelijkse maximum is bereikt. Probeer morgen opnieuw." });
   }
 
   try {
-    const formData = await req.formData();
-    let pdfBytes: Uint8Array;
+    let pdfBuffer;
 
-    const pdfFile = formData.get("pdf") as File | null;
-    const url = formData.get("url") as string | null;
-
-    if (pdfFile) {
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      pdfBytes = new Uint8Array(arrayBuffer);
-    } else if (url) {
-      pdfBytes = await fetchPdfFromUrl(url);
+    if (req.file) {
+      pdfBuffer = req.file.buffer;
+    } else if (req.body.url) {
+      const response = await fetch(req.body.url, { timeout: 15000 });
+      if (!response.ok) throw new Error(`Kon URL niet ophalen (${response.status}).`);
+      pdfBuffer = await response.buffer();
     } else {
-      return NextResponse.json({ error: "Geen PDF of URL ontvangen." }, { status: 400 });
+      return res.status(400).json({ error: "Geen PDF of URL ontvangen." });
     }
 
-    const text = await extractTextFromPdfBytes(pdfBytes);
+    const parsed = await pdfParse(pdfBuffer);
+    const text = parsed.text;
 
     if (text.trim().length < 100) {
-      return NextResponse.json(
-        { error: "Het PDF-bestand bevat te weinig tekst om te analyseren." },
-        { status: 422 }
-      );
+      return res.status(422).json({ error: "De PDF bevat te weinig tekst om te analyseren." });
     }
 
     const result = await callGemini(text);
+    res.json({ result });
 
-    return NextResponse.json({ result });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Onbekende fout.";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Onbekende fout." });
   }
-}
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server draait op poort ${PORT}`));
