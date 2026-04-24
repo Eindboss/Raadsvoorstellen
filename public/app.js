@@ -98,6 +98,12 @@ function renderResult(data) {
   document.getElementById("vragen-list").innerHTML =
     (data.raadsvragen || []).map(v => `<li>${escHtml(v)}</li>`).join("");
 
+  // Gemeente
+  if (data.gemeente && data.gemeente !== "Onbekend") {
+    document.getElementById("gemeente-naam").textContent = data.gemeente;
+    document.getElementById("gemeente-badge").classList.remove("hidden");
+  }
+
   // Bevoegdheid
   const bev = data.bevoegdheid || {};
   const oordeel = bev.oordeel || "onduidelijk";

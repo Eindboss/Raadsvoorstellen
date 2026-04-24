@@ -197,6 +197,7 @@ async function callOpenAI(text) {
 
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
+  "gemeente": "Amsterdam",
   "beslispunten": ["beslispunt 1", "beslispunt 2"],
   "kern": "Één of twee zinnen over waar dit voorstel over gaat en wat de kern van het verzoek is.",
   "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
@@ -222,6 +223,7 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
 }
 
 Regels:
+- gemeente: naam van de gemeente waarvan dit raadsvoorstel afkomstig is (herkenbaar uit briefhoofd, aanhef of documentopmaak). Schrijf alleen de gemeentenaam, bijv. "Ridderkerk" of "Amsterdam". Als onbekend: "Onbekend".
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
 - kern: publiekssamenvatting in B1-taalniveau — korte zinnen, geen jargon, geen afkortingen. Schrijf alsof je het uitlegt aan een geïnteresseerde burger die het voorstel niet heeft gelezen. Max 3 zinnen.
 - verbeterpunten: concrete, herstelbare punten als korte bullets in B1-taal (max 6, geen jargon)
