@@ -204,6 +204,21 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 .gemeente-icon { font-size: 0.9rem; }
 
+/* Type voorstel badge */
+.type-badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 3px;
+  padding: 0.25rem 0.65rem;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+}
+
 /* Score panel */
 .score-panel {
   margin-top: auto;

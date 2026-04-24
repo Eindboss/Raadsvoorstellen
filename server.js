@@ -193,19 +193,24 @@ async function callOpenAI(text) {
 
   const truncated = text.slice(0, 60000);
 
-  const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric. Voer een strikte formele toets uit. Wees streng op beslispunten en consistentie.
+  const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
+Voer een strikte formele toets uit.
+Bepaal eerst het type voorstel en pas de beoordeling daarop aan.
+Wees streng op beslispunten, bevoegdheid, consistentie en besluitrijpheid.
+Wees terughoudend met financiële opmerkingen, risico's en raadsvragen als die voor dit type voorstel niet relevant zijn.
 
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
   "gemeente": "Amsterdam",
+  "typeVoorstel": "benoeming | zienswijze | verordening | financieel | beleid | beleidskader | ruimtelijk-vastgoed | motie-afdoening | procedureel | overig",
   "beslispunten": ["beslispunt 1", "beslispunt 2"],
-  "kern": "Één of twee zinnen over waar dit voorstel over gaat en wat de kern van het verzoek is.",
+  "kern": "Publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen.",
   "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
   "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
   "bevoegdheid": {
-    "oordeel": "ja",
-    "toelichting": "Het voorstel verwijst naar artikel 4 van de Gemeentewet als grondslag voor de bevoegdheid van de raad.",
-    "grondslag": "Artikel 4 Gemeentewet"
+    "oordeel": "ja | nee | onduidelijk | niet van toepassing",
+    "toelichting": "Korte toelichting op de bevoegdheid van de raad.",
+    "grondslag": "Genoemde grondslag of lege string als deze niet is genoemd"
   },
   "score": {
     "totaal": 74,
@@ -213,7 +218,7 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
       "Beslispunten": "groen",
       "Toelichting": "oranje",
       "Consistentie": "groen",
-      "Financiën": "rood",
+      "Financiën": "groen",
       "Rolzuiverheid": "groen",
       "Besluitrijpheid": "oranje",
       "Juridisch": "groen"
@@ -223,20 +228,21 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
 }
 
 Regels:
-- gemeente: naam van de gemeente waarvan dit raadsvoorstel afkomstig is (herkenbaar uit briefhoofd, aanhef of documentopmaak). Schrijf alleen de gemeentenaam, bijv. "Ridderkerk" of "Amsterdam". Als onbekend: "Onbekend".
+- gemeente: naam van de gemeente herkenbaar uit briefhoofd, aanhef of documentopmaak. Alleen de gemeentenaam, bijv. "Ridderkerk". Als onbekend: "Onbekend".
+- typeVoorstel: kies één van de genoemde types; gebruik "beleid" voor concrete beleidsvoorstellen en "beleidskader" alleen voor strategische kaders/visiedocumenten
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
-- kern: publiekssamenvatting in B1-taalniveau — korte zinnen, geen jargon, geen afkortingen. Schrijf alsof je het uitlegt aan een geïnteresseerde burger die het voorstel niet heeft gelezen. Max 3 zinnen.
-- verbeterpunten: concrete, herstelbare punten als korte bullets in B1-taal (max 6, geen jargon)
-- raadsvragen: de 3 meest voor de hand liggende kritische vragen die een raadslid aan het college zal stellen over dit voorstel
-- score.totaal: geheel getal 0-100 gebaseerd op het aantal en ernst van de aandachtspunten (100 = perfect, 0 = onbruikbaar)
-- score.onderdelen: per categorie "groen" (geen problemen), "oranje" (aandachtspunten) of "rood" (herstel vereist)
-- bevoegdheid.oordeel: "ja" (raadsbevoegdheid duidelijk onderbouwd), "onduidelijk" (twijfelachtig of onvolledig), of "nee" (ontbreekt volledig)
+- kern: publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen, geen jargon, geen afkortingen
+- verbeterpunten: alleen concrete herstelpunten, maximaal 6
+- raadsvragen: formuleer alleen vragen die passen bij het type voorstel; bij eenvoudige benoemingen geen geforceerde financiële of beleidsmatige vragen
+- bevoegdheid.oordeel: "ja", "nee", "onduidelijk" of "niet van toepassing"
 - bevoegdheid.toelichting: één zin over wat er staat of ontbreekt
-- bevoegdheid.grondslag: de gevonden wettelijke grondslag (wet, artikel, verordening) of "niet gevonden"
-- rapport: het volledige toetsrapport volgens de rubric
+- bevoegdheid.grondslag: gevonden wettelijke grondslag of lege string
+- score.totaal: geheel getal 0-100 gebaseerd op aantal, ernst en type voorstel
+- score.onderdelen: per categorie "groen", "oranje" of "rood"
+- financiën mag groen zijn als financiële gevolgen voor dit type voorstel niet relevant zijn
+- rapport: volg exact de structuur Samenvatting, Aandachtspunten, Risico's, Advies
 
----
-
+Concept-raadsvoorstel:
 ${truncated}`;
 
   const response = await openai.chat.completions.create({

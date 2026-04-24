@@ -104,6 +104,12 @@ function renderResult(data) {
     document.getElementById("gemeente-badge").classList.remove("hidden");
   }
 
+  // Type voorstel
+  if (data.typeVoorstel) {
+    document.getElementById("type-label").textContent = data.typeVoorstel.replace(/-/g, "\u2011");
+    document.getElementById("type-badge").classList.remove("hidden");
+  }
+
   // Bevoegdheid
   const bev = data.bevoegdheid || {};
   const oordeel = bev.oordeel || "onduidelijk";
