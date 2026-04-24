@@ -1,3 +1,4 @@
+try { require("dotenv").config(); } catch(e) {}
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
