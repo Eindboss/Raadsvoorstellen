@@ -50,6 +50,21 @@
         <p id="error-message"></p>
       </div>
 
+      <!-- Score indicator -->
+      <div id="score-panel" class="score-panel hidden">
+        <div class="score-gauge">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#ffffff15" stroke-width="7"/>
+            <circle id="score-ring" cx="40" cy="40" r="34" fill="none" stroke="#22c55e" stroke-width="7"
+              stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"
+              transform="rotate(-90 40 40)"/>
+          </svg>
+          <div class="score-number" id="score-number">--</div>
+        </div>
+        <div class="score-label" id="score-label">Beoordeeld</div>
+        <div class="score-cats" id="score-cats"></div>
+      </div>
+
       <div class="left-footer">
         <p>Beoordeelt uitsluitend formele kwaliteit — niet de politieke inhoud.</p>
       </div>

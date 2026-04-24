@@ -201,6 +201,18 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
   "kern": "Één of twee zinnen over waar dit voorstel over gaat en wat de kern van het verzoek is.",
   "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
   "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
+  "score": {
+    "totaal": 74,
+    "onderdelen": {
+      "Beslispunten": "groen",
+      "Toelichting": "oranje",
+      "Consistentie": "groen",
+      "Financiën": "rood",
+      "Rolzuiverheid": "groen",
+      "Besluitrijpheid": "oranje",
+      "Juridisch": "groen"
+    }
+  },
   "rapport": "Samenvatting\\n[tekst]\\n\\nAandachtspunten\\n[tekst]\\n\\nRisico's\\n[tekst]\\n\\nAdvies\\n[tekst]"
 }
 
@@ -209,6 +221,8 @@ Regels:
 - kern: neutrale samenvatting van het voorstel in gewone taal
 - verbeterpunten: concrete, herstelbare punten als korte bullets (max 6)
 - raadsvragen: de 3 meest voor de hand liggende kritische vragen die een raadslid aan het college zal stellen over dit voorstel
+- score.totaal: geheel getal 0-100 gebaseerd op het aantal en ernst van de aandachtspunten (100 = perfect, 0 = onbruikbaar)
+- score.onderdelen: per categorie "groen" (geen problemen), "oranje" (aandachtspunten) of "rood" (herstel vereist)
 - rapport: het volledige toetsrapport volgens de rubric
 
 ---

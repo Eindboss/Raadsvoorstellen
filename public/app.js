@@ -102,8 +102,46 @@ function renderResult(data) {
   document.getElementById("rapport-content").innerHTML =
     formatRapport(data.rapport || "");
 
+  renderScore(data.score);
+
   emptyState.classList.add("hidden");
   resultGrid.classList.remove("hidden");
+}
+
+function renderScore(score) {
+  if (!score) return;
+  const panel = document.getElementById("score-panel");
+  const ring = document.getElementById("score-ring");
+  const numEl = document.getElementById("score-number");
+  const labelEl = document.getElementById("score-label");
+  const catsEl = document.getElementById("score-cats");
+
+  const totaal = score.totaal || 0;
+  const circumference = 213.6;
+  const offset = circumference - (totaal / 100) * circumference;
+
+  // Kleur op basis van score
+  const kleur = totaal >= 70 ? "#22c55e" : totaal >= 50 ? "#f59e0b" : "#ef4444";
+  const label = totaal >= 70 ? "Voldoende kwaliteit" : totaal >= 50 ? "Verbetering nodig" : "Niet besluitrijp";
+
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = kleur;
+  numEl.textContent = totaal;
+  labelEl.textContent = label;
+
+  // Categorieën
+  catsEl.innerHTML = Object.entries(score.onderdelen || {})
+    .map(([naam, status]) => `
+      <div class="score-cat">
+        <span class="score-dot ${status}"></span>
+        <span>${naam}</span>
+      </div>`)
+    .join("");
+
+  // Animeer ring
+  ring.style.transition = "stroke-dashoffset 1s ease, stroke 0.3s ease";
+
+  panel.classList.remove("hidden");
 }
 
 function formatRapport(tekst) {
