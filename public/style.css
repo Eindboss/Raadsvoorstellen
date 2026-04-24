@@ -447,6 +447,15 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   color: var(--accent);
 }
 
+.vragen-leeg {
+  font-family: 'Inter', sans-serif;
+  font-style: normal !important;
+  font-size: 0.82rem;
+  color: var(--muted);
+  list-style: none;
+  padding-left: 0;
+}
+
 /* Bevoegdheid */
 .bevoegdheid-oordeel {
   display: inline-flex;

@@ -95,8 +95,10 @@ function renderResult(data) {
     (data.verbeterpunten || []).map(p => `<li>${escHtml(p)}</li>`).join("");
 
   // Raadsvragen
-  document.getElementById("vragen-list").innerHTML =
-    (data.raadsvragen || []).map(v => `<li>${escHtml(v)}</li>`).join("");
+  const vragen = data.raadsvragen || [];
+  document.getElementById("vragen-list").innerHTML = vragen.length
+    ? vragen.map(v => `<li>${escHtml(v)}</li>`).join("")
+    : `<li class="vragen-leeg">Geen vragen gegenereerd voor dit type voorstel.</li>`;
 
   // Gemeente
   if (data.gemeente && data.gemeente !== "Onbekend") {

@@ -197,7 +197,8 @@ async function callOpenAI(text) {
 Voer een strikte formele toets uit.
 Bepaal eerst het type voorstel en pas de beoordeling daarop aan.
 Wees streng op beslispunten, bevoegdheid, consistentie en besluitrijpheid.
-Wees terughoudend met financiële opmerkingen, risico's en raadsvragen als die voor dit type voorstel niet relevant zijn.
+Wees terughoudend met financiële opmerkingen en risico's als die voor dit type voorstel niet relevant zijn.
+Genereer altijd minimaal 3 concrete raadsvragen, toegespitst op dit specifieke voorstel.
 
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
@@ -233,7 +234,7 @@ Regels:
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
 - kern: publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen, geen jargon, geen afkortingen
 - verbeterpunten: alleen concrete herstelpunten, maximaal 6
-- raadsvragen: formuleer alleen vragen die passen bij het type voorstel; bij eenvoudige benoemingen geen geforceerde financiële of beleidsmatige vragen
+- raadsvragen: formuleer altijd minimaal 3 en maximaal 5 vragen die een kritisch raadslid bij dit specifieke voorstel zou stellen; alleen bij puur ceremoniële benoemingen mag de lijst korter zijn; de vragen moeten concreet zijn en aansluiten bij de inhoud van dit voorstel
 - bevoegdheid.oordeel: "ja", "nee", "onduidelijk" of "niet van toepassing"
 - bevoegdheid.toelichting: één zin over wat er staat of ontbreekt
 - bevoegdheid.grondslag: gevonden wettelijke grondslag of lege string
