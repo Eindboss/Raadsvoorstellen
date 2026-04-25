@@ -218,7 +218,7 @@ function renderResult(data) {
   statusIdle.classList.add("hidden");
   emptyState.classList.add("hidden");
   resultGrid.classList.remove("hidden");
-  document.querySelector(".rapport-scroll")?.scrollTo({ top: 0 });
+  resetResultScrollPositions();
 }
 
 function renderScore(score) {
@@ -281,6 +281,18 @@ function formatOnderbouwing(tekst) {
   });
 
   return parts.join("") || `<p>${escHtml(tekst)}</p>`;
+}
+
+function resetResultScrollPositions() {
+  [
+    "#beslispunten-list",
+    "#bevoegdheid-content",
+    "#vragen-list",
+    "#verbeter-list",
+    ".rapport-scroll"
+  ].forEach(selector => {
+    document.querySelector(selector)?.scrollTo({ top: 0, left: 0 });
+  });
 }
 
 function escHtml(str) {
