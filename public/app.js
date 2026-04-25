@@ -195,6 +195,8 @@ function renderScore(score) {
   ring.style.transition = "stroke-dashoffset 1s ease, stroke 0.3s ease";
 
   panel.classList.remove("hidden");
+  const sd = document.getElementById("score-divider");
+  if (sd) sd.style.display = "";
 }
 
 function formatRapport(tekst) {

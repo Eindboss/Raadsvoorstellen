@@ -37,6 +37,8 @@
         <button id="submit-btn" class="btn-primary">Toets uitvoeren</button>
       </div>
 
+      <div class="panel-divider"></div>
+
       <!-- Voorstel-info: gemeente + classificatie, verschijnt na analyse -->
       <div id="voorstel-info" class="voorstel-info hidden">
         <div id="gemeente-badge" class="gemeente-badge hidden">
@@ -66,6 +68,8 @@
       <div id="status-error" class="status-msg error hidden">
         <p id="error-message"></p>
       </div>
+
+      <div class="panel-divider" id="score-divider" style="display:none"></div>
 
       <!-- Score indicator -->
       <div id="score-panel" class="score-panel hidden">
@@ -114,36 +118,41 @@
       <!-- Resultaat grid -->
       <div id="result-grid" class="result-grid hidden">
 
-        <div class="dash-card card-beslispunten">
-          <div class="card-label">Beslispunten</div>
-          <ol id="beslispunten-list"></ol>
-        </div>
-
+        <!-- Kern: banner bovenaan, volle breedte -->
         <div class="dash-card card-kern">
           <div class="card-label">Kern van het voorstel</div>
           <p id="kern-text"></p>
         </div>
 
-        <div class="dash-card card-vragen">
-          <div class="card-label">Verwachte raadsvragen</div>
-          <ol id="vragen-list"></ol>
-        </div>
-
+        <!-- Kwaliteitstoets: hoofdkaart links -->
         <div class="dash-card card-rapport">
           <div class="card-label">Kwaliteitstoets</div>
           <div id="rapport-content" class="rapport-scroll"></div>
         </div>
 
-        <div class="dash-card card-side">
-          <div class="dash-card card-bevoegdheid" id="card-bevoegdheid">
+        <!-- Rechterkolom -->
+        <div class="card-right">
+
+          <div class="dash-card card-bevoegdheid">
             <div class="card-label">Raadsbevoegdheid</div>
             <div id="bevoegdheid-content"></div>
+          </div>
+
+          <div class="dash-card card-beslispunten">
+            <div class="card-label">Beslispunten</div>
+            <ol id="beslispunten-list"></ol>
+          </div>
+
+          <div class="dash-card card-vragen">
+            <div class="card-label">Verwachte raadsvragen</div>
+            <ol id="vragen-list"></ol>
           </div>
 
           <div class="dash-card card-verbeter">
             <div class="card-label">Verbeterpunten</div>
             <ul id="verbeter-list"></ul>
           </div>
+
         </div>
 
       </div>

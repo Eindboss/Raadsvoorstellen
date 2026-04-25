@@ -2,147 +2,30 @@
 
 :root {
   --ink: #1a1a1a;
+  --ink-light: #374151;
   --muted: #6b7280;
+  --muted-light: #9ca3af;
   --border: #e5e1db;
+  --border-light: #f0ece7;
   --bg: #f7f5f2;
   --white: #ffffff;
   --accent: #1a3a5c;
+  --accent-mid: #254d78;
   --accent-light: #e8eef5;
+  --accent-faint: #f4f7fa;
+  --sand: #faf8f5;
   --orange: #92400e;
   --orange-bg: #fffbeb;
   --orange-border: #fcd34d;
-  --blue: #1e40af;
-  --blue-bg: #eff6ff;
   --green: #166534;
   --green-bg: #f0fdf4;
-  --panel-w: 260px;
+  --red-bg: #fef2f2;
+  --red: #991b1b;
+  --panel-w: 280px;
+  --radius: 6px;
 }
 
 html, body { height: 100%; overflow: hidden; }
-
-/* ── Mobiel ──────────────────────────────────────────────── */
-@media (max-width: 767px) {
-  html, body { height: auto; overflow: auto; }
-
-  .shell {
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
-  }
-
-  /* Sidebar wordt compacte topbalk */
-  .left-panel {
-    width: 100%;
-    min-width: 0;
-    padding: 1rem;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .brand { margin-bottom: 1rem; }
-
-  /* Upload sectie horizontaal op mobiel */
-  .upload-section { margin-bottom: 0; }
-
-  .tabs { margin-bottom: 0.75rem; }
-
-  .input-group { margin-bottom: 0.6rem; }
-
-  /* Score panel: horizontaal (gauge links, cats rechts) */
-  .score-panel {
-    flex-direction: row;
-    align-items: flex-start;
-    margin-top: 1rem;
-    margin-bottom: 0.75rem;
-    gap: 1rem;
-  }
-
-  .score-gauge { flex-shrink: 0; }
-
-  .score-label { text-align: left; }
-
-  .score-cats {
-    flex-direction: column;
-    margin-top: 0;
-    flex: 1;
-  }
-
-  /* Classificatie + gemeente onder score */
-  .voorstel-info { margin-top: 0.75rem; }
-
-  /* Footer weghalen op mobiel (ruimte besparen) */
-  .left-footer { display: none; }
-
-  /* Touch-vriendelijke knoppen */
-  .btn-primary { padding: 0.85rem; font-size: 0.95rem; }
-  .tab { padding: 0.45rem 1rem; font-size: 0.85rem; }
-  .file-name { padding: 0.65rem 0.75rem; }
-
-  input[type="url"] { font-size: 1rem; padding: 0.65rem 0.75rem; }
-
-  /* Dashboard */
-  .dashboard {
-    overflow: visible;
-    padding: 0.75rem;
-  }
-
-  /* Lege staat */
-  .empty-state {
-    padding: 2rem 1rem;
-    justify-content: flex-start;
-  }
-
-  .empty-icon-svg { width: 56px; height: 56px; margin-bottom: 1rem; }
-
-  /* Resultaat grid: 1 kolom, auto hoogte */
-  .result-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    overflow: visible;
-    height: auto;
-  }
-
-  /* Cards: geen vaste hoogte, scrollen niet intern maar met pagina mee */
-  .dash-card {
-    overflow: visible;
-  }
-
-  .dash-card ol,
-  .dash-card ul,
-  .card-kern p,
-  .rapport-scroll {
-    overflow: visible;
-    max-height: none;
-  }
-
-  /* Side-kolom: gewoon stapelen */
-  .card-side {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    background: none;
-    border: none;
-    padding: 0;
-  }
-
-  /* Grid plaatsingen resetten — niet nodig bij flex */
-  .card-beslispunten,
-  .card-kern,
-  .card-vragen,
-  .card-rapport,
-  .card-side { grid-column: unset; grid-row: unset; }
-
-  /* Volgorde op mobiel: kern eerst, dan beslispunten, rapport, vragen, side */
-  .card-kern        { order: 1; }
-  .card-beslispunten{ order: 2; }
-  .card-rapport     { order: 3; }
-  .card-vragen      { order: 4; }
-  .card-side        { order: 5; }
-
-  /* Rapport geen interne scroll */
-  .rapport-sectie p { white-space: pre-wrap; }
-}
 
 body {
   font-family: 'Lora', Georgia, serif;
@@ -152,14 +35,14 @@ body {
   background: var(--bg);
 }
 
-/* Shell */
+/* ── Shell ───────────────────────────────────────────────── */
 .shell {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
-/* Left panel */
+/* ── Left panel ──────────────────────────────────────────── */
 .left-panel {
   width: var(--panel-w);
   min-width: var(--panel-w);
@@ -167,29 +50,48 @@ body {
   color: white;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1.25rem;
-  overflow: hidden;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Panel secties */
+.panel-section {
+  padding: 1.25rem 1.25rem;
+}
+
+.panel-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 0 1.25rem;
+  flex-shrink: 0;
 }
 
 .brand {
   font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.6);
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   line-height: 1.4;
-  margin-bottom: 2rem;
+  padding: 1.5rem 1.25rem 1.25rem;
 }
 
 .brand strong {
+  display: block;
   color: white;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  margin-top: 0.15rem;
 }
 
-/* Tabs */
+/* ── Tabs ────────────────────────────────────────────────── */
+.upload-section { padding: 0 1.25rem 1.25rem; }
+
 .tabs {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin-bottom: 1rem;
 }
 
@@ -197,14 +99,16 @@ body {
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 3px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
   background: transparent;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+
+.tab:hover { color: white; border-color: rgba(255,255,255,0.5); }
 
 .tab.active {
   background: white;
@@ -212,20 +116,23 @@ body {
   border-color: white;
 }
 
-/* Upload */
-.upload-section { margin-bottom: 1.25rem; }
+.tab:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.8);
+  outline-offset: 2px;
+}
 
+/* ── Upload ──────────────────────────────────────────────── */
 .input-group { margin-bottom: 0.75rem; }
 
 label {
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.6);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
   margin-bottom: 0.3rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 input[type="file"] { display: none; }
@@ -233,23 +140,20 @@ input[type="file"] { display: none; }
 .file-name {
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: rgba(255,255,255,0.5);
   margin-top: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   border: 1px dashed rgba(255,255,255,0.3);
-  border-radius: 3px;
-  transition: all 0.15s;
+  border-radius: 4px;
+  transition: border-color 0.15s, color 0.15s;
 }
 
-.file-name:hover {
-  border-color: rgba(255,255,255,0.6);
-  color: white;
-}
+.file-name:hover { border-color: rgba(255,255,255,0.6); color: white; }
 
 .file-name.has-file {
   border-style: solid;
@@ -257,53 +161,82 @@ input[type="file"] { display: none; }
   color: white;
 }
 
+.file-name:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.8);
+  outline-offset: 2px;
+}
+
 input[type="url"] {
   font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   width: 100%;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 3px;
-  background: rgba(255,255,255,0.1);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
   color: white;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+input[type="url"]::placeholder { color: rgba(255,255,255,0.35); }
+
+input[type="url"]:hover { border-color: rgba(255,255,255,0.4); }
+
+input[type="url"]:focus,
+input[type="url"]:focus-visible {
+  border-color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.12);
   outline: none;
 }
 
-input[type="url"]::placeholder { color: rgba(255,255,255,0.4); }
-input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
-
+/* ── CTA button ──────────────────────────────────────────── */
 .btn-primary {
   font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 600;
   width: 100%;
-  padding: 0.65rem;
+  padding: 0.8rem 1rem;
   background: white;
   color: var(--accent);
   border: none;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1);
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.1s;
 }
 
-.btn-primary:hover { opacity: 0.9; }
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary:hover {
+  opacity: 0.95;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+}
 
-/* Status */
+.btn-primary:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+
+.btn-primary:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.85);
+  outline-offset: 2px;
+}
+
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Status berichten ────────────────────────────────────── */
 .status-msg {
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
-  line-height: 1.5;
-  margin-top: 1rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.55;
+  padding: 0.75rem 1.25rem;
 }
 
 .status-msg.error { color: #fca5a5; }
 
 .spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255,255,255,0.2);
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.18);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -312,36 +245,35 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Voorstel info blok (gemeente + type) */
+/* ── Voorstel-info (gemeente + classificatie) ────────────── */
 .voorstel-info {
-  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
 }
 
-/* Gemeente badge */
 .gemeente-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-family: 'Inter', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 500;
   color: white;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.1);
   border-radius: 4px;
   padding: 0.45rem 0.75rem;
 }
 
-/* Classificatie blok */
 .classificatie-blok {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255,255,255,0.07);
+  gap: 0.3rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255,255,255,0.06);
   border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .classificatie-hoofd-row {
@@ -353,7 +285,7 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 .classificatie-hoofd {
   font-family: 'Inter', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255,255,255,0.9);
   line-height: 1.3;
@@ -361,8 +293,8 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 .classificatie-sub {
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.45);
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.42);
   line-height: 1.4;
   font-style: italic;
 }
@@ -370,22 +302,21 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 .complex-pill {
   font-family: 'Inter', sans-serif;
   font-size: 0.62rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.1rem 0.45rem;
+  letter-spacing: 0.07em;
+  padding: 0.12rem 0.45rem;
   border-radius: 20px;
   flex-shrink: 0;
 }
 
-.complex-pill.laag   { background: rgba(34,197,94,0.2);  color: #86efac; }
-.complex-pill.middel { background: rgba(245,158,11,0.2); color: #fcd34d; }
-.complex-pill.hoog   { background: rgba(239,68,68,0.2);  color: #fca5a5; }
+.complex-pill.laag   { background: rgba(34,197,94,0.18);  color: #86efac; }
+.complex-pill.middel { background: rgba(245,158,11,0.2);  color: #fcd34d; }
+.complex-pill.hoog   { background: rgba(239,68,68,0.18);  color: #fca5a5; }
 
-/* Score panel */
+/* ── Score panel ─────────────────────────────────────────── */
 .score-panel {
-  margin-top: 1.25rem;
-  margin-bottom: 0.75rem;
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -405,24 +336,24 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   align-items: center;
   justify-content: center;
   font-family: 'Inter', sans-serif;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: white;
 }
 
 .score-label {
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.45);
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .score-cats {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
   width: 100%;
   margin-top: 0.25rem;
 }
@@ -430,10 +361,10 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 .score-cat {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.65);
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
 }
 
 .score-dot {
@@ -447,26 +378,28 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 .score-dot.oranje { background: #f59e0b; }
 .score-dot.rood   { background: #ef4444; }
 
+/* ── Footer ──────────────────────────────────────────────── */
 .left-footer {
   font-family: 'Inter', sans-serif;
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.22);
   line-height: 1.5;
   margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 
-/* Dashboard main */
+/* ── Dashboard ───────────────────────────────────────────── */
 .dashboard {
   flex: 1;
   overflow: hidden;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-/* Empty state */
+/* ── Empty state ─────────────────────────────────────────── */
 .empty-state {
   flex: 1;
   display: flex;
@@ -474,32 +407,31 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: var(--muted);
-  max-width: 440px;
+  max-width: 460px;
   margin: 0 auto;
-  gap: 0;
 }
 
 .empty-icon-svg {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 1.5rem;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 1.75rem;
+  opacity: 0.85;
 }
 
 .empty-state h2 {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: var(--ink);
-  margin-bottom: 0.6rem;
-  line-height: 1.35;
+  margin-bottom: 0.65rem;
+  line-height: 1.3;
 }
 
 .empty-state > p {
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--muted);
-  line-height: 1.65;
-  margin-bottom: 1.75rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
 }
 
 .empty-checks {
@@ -511,59 +443,91 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 
 .empty-checks span {
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 0.2rem 0.7rem;
+  padding: 0.25rem 0.8rem;
   background: var(--white);
-  letter-spacing: 0.02em;
 }
 
-/* Result grid */
+/* ── Result grid ─────────────────────────────────────────── */
 .result-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 310px;
   grid-template-rows: auto 1fr;
   gap: 0.75rem;
   overflow: hidden;
   height: 100%;
+  min-width: 0;
 }
 
+/* Kern: volle breedte banner */
+.card-kern {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  background: var(--sand);
+  border-color: var(--border-light);
+}
+
+/* Rapport: hoofdkaart links */
+.card-rapport {
+  grid-column: 1;
+  grid-row: 2;
+  border-left: 3px solid var(--accent);
+}
+
+/* Rechterkolom */
+.card-right {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
 .dash-card {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 1rem 1.1rem;
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .card-label {
   font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--muted);
-  margin-bottom: 0.6rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
 }
 
-/* Card plaatsing */
-.card-beslispunten { grid-column: 1; grid-row: 1; }
-.card-kern         { grid-column: 2; grid-row: 1; }
-.card-vragen       { grid-column: 3; grid-row: 1; }
-.card-rapport      { grid-column: 1 / 3; grid-row: 2; }
-.card-side         { grid-column: 3; grid-row: 2; display: flex; flex-direction: column; gap: 0.75rem; background: none; border: none; padding: 0; }
-.card-side .dash-card { flex: 1; }
+/* Bevoegdheid: prominente kaart */
+.card-bevoegdheid {
+  background: var(--accent-faint);
+  border-color: var(--accent-light);
+}
 
-/* Card content */
+.card-bevoegdheid .card-label {
+  color: var(--accent);
+  border-bottom-color: var(--accent-light);
+}
+
+/* ── Card content ────────────────────────────────────────── */
 .dash-card ol,
 .dash-card ul {
   overflow-y: auto;
@@ -573,32 +537,29 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 .dash-card ol {
   padding-left: 1.1rem;
   font-size: 0.875rem;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
-.dash-card ol li { margin-bottom: 0.4rem; }
+.dash-card ol li { margin-bottom: 0.45rem; }
 
+/* Kern card: cursieve samenvattingstekst */
 .card-kern p {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-style: italic;
-  line-height: 1.65;
-  overflow-y: auto;
-  flex: 1;
+  line-height: 1.7;
+  color: var(--ink-light);
 }
 
 /* Verbeterpunten */
-.card-verbeter ul {
-  list-style: none;
-  padding: 0;
-}
+.card-verbeter ul { list-style: none; padding: 0; }
 
 .card-verbeter ul li {
   font-family: 'Inter', sans-serif;
   font-size: 0.82rem;
-  line-height: 1.45;
-  padding: 0.4rem 0.6rem;
+  line-height: 1.5;
+  padding: 0.4rem 0.65rem;
   margin-bottom: 0.35rem;
-  border-radius: 3px;
+  border-radius: 4px;
   border-left: 3px solid var(--orange-border);
   background: var(--orange-bg);
   color: var(--orange);
@@ -607,7 +568,7 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
 /* Raadsvragen */
 .card-vragen ol {
   font-style: italic;
-  color: var(--accent);
+  color: var(--accent-mid);
 }
 
 .vragen-leeg {
@@ -619,28 +580,34 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   padding-left: 0;
 }
 
-/* Bevoegdheid */
+/* Beslispunten: compact en scanbaar */
+.card-beslispunten ol {
+  font-size: 0.85rem;
+}
+
+/* ── Bevoegdheid badges ──────────────────────────────────── */
 .bevoegdheid-oordeel {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.3rem 0.65rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
   border-radius: 20px;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.65rem;
+  letter-spacing: 0.01em;
 }
 
-.bevoegdheid-oordeel.ja         { background: var(--green-bg); color: var(--green); }
+.bevoegdheid-oordeel.ja          { background: var(--green-bg);  color: var(--green); }
 .bevoegdheid-oordeel.onduidelijk { background: var(--orange-bg); color: var(--orange); }
-.bevoegdheid-oordeel.nee        { background: #fef2f2; color: #991b1b; }
+.bevoegdheid-oordeel.nee         { background: var(--red-bg);    color: var(--red); }
 
 .bevoegdheid-toelichting {
   font-size: 0.85rem;
-  line-height: 1.55;
-  color: var(--ink);
-  margin-bottom: 0.4rem;
+  line-height: 1.6;
+  color: var(--ink-light);
+  margin-bottom: 0.5rem;
 }
 
 .bevoegdheid-grondslag {
@@ -650,26 +617,131 @@ input[type="url"]:focus { border-color: rgba(255,255,255,0.7); }
   font-style: italic;
 }
 
-/* Rapport */
+/* ── Rapport ─────────────────────────────────────────────── */
 .rapport-scroll {
   overflow-y: auto;
   flex: 1;
-  font-size: 0.875rem;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1.75;
 }
 
-.rapport-sectie { margin-bottom: 1rem; }
+.rapport-sectie { margin-bottom: 1.25rem; }
 
 .rapport-sectie h4 {
   font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin-bottom: 0.3rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
 }
 
-.rapport-sectie p { white-space: pre-wrap; }
+.rapport-sectie p { white-space: pre-wrap; color: var(--ink-light); }
+
+/* ── Tablet breakpoint (768–1200px) ──────────────────────── */
+@media (min-width: 768px) and (max-width: 1200px) {
+  :root { --panel-w: 240px; }
+
+  .result-grid {
+    grid-template-columns: 1fr 270px;
+  }
+
+  .card-kern p { font-size: 0.9rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  :root { --panel-w: 220px; }
+
+  .result-grid {
+    grid-template-columns: 1fr 240px;
+    gap: 0.6rem;
+  }
+
+  .dash-card { padding: 0.85rem 0.95rem; }
+}
+
+/* ── Mobiel (< 768px) ────────────────────────────────────── */
+@media (max-width: 767px) {
+  html, body { height: auto; overflow: auto; }
+
+  .shell {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .left-panel {
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .brand { padding: 1rem 1.25rem 0.75rem; }
+  .upload-section { padding: 0 1rem 1rem; }
+  .status-msg { padding: 0.5rem 1rem; }
+  .voorstel-info { padding: 0.5rem 1rem; }
+  .panel-divider { margin: 0 1rem; }
+
+  /* Score: horizontaal */
+  .score-panel {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+  }
+
+  .score-gauge { flex-shrink: 0; }
+  .score-label { text-align: left; }
+  .score-cats { flex: 1; margin-top: 0; }
+
+  .left-footer { display: none; }
+
+  /* Dashboard */
+  .dashboard { overflow: visible; padding: 0.75rem; }
+
+  .empty-state { padding: 2rem 1rem; justify-content: flex-start; }
+  .empty-icon-svg { width: 52px; height: 52px; margin-bottom: 1.25rem; }
+
+  /* Grid: enkelvoudige kolom */
+  .result-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: visible;
+    height: auto;
+  }
+
+  .dash-card { overflow: visible; }
+
+  .dash-card ol,
+  .dash-card ul,
+  .card-kern p,
+  .rapport-scroll {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .card-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: visible;
+  }
+
+  /* Volgorde mobiel */
+  .card-kern        { order: 1; }
+  .card-rapport     { order: 2; }
+  .card-bevoegdheid { order: 3; }
+  .card-beslispunten{ order: 4; }
+  .card-vragen      { order: 5; }
+  .card-verbeter    { order: 6; }
+
+  /* Touch targets */
+  .btn-primary { padding: 0.9rem; font-size: 0.95rem; }
+  .tab { padding: 0.5rem 1rem; }
+  .file-name { padding: 0.65rem 0.75rem; }
+  input[type="url"] { font-size: 1rem; padding: 0.65rem 0.75rem; }
+}
 
 .hidden { display: none !important; }
