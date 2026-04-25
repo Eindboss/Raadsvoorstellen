@@ -315,6 +315,17 @@ Controleer niet standaard of in het raadsbesluit onder Gelet op een wettelijke g
 
 Voer een lichte check uit op logische agendering en evidente procedurele fouten.
 
+Controleer daarnaast bij voorstellen die een nieuw project, beleid of maatregel
+bevatten of een indicatief tijdspad is opgenomen.
+
+Signaleer als:
+het voorstel een project of maatregel introduceert maar geen enkel tijdspad,
+startdatum of verwachte oplevering bevat,
+of de raad niet wordt geïnformeerd over cruciale beslismomenten of
+terugkoppelmomenten tijdens de uitvoering.
+
+Sla de tijdspadcheck over bij benoemingen, zienswijzen en kennisname-voorstellen.
+
 13. Naamgeving
 
 Controleer of de titel duidelijk is, niet onnodig lang is, geen afkortingen bevat en aansluit bij de inhoud.
