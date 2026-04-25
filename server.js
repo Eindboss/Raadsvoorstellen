@@ -275,7 +275,6 @@ Werkinstructies
 
 De formulering "vast te stellen en te versturen" is gangbaar bij zienswijzen op begrotingen van gemeenschappelijke regelingen en behoeft geen nadere precisering.
 Beslispunten hoeven geen deadline of geadresseerde te bevatten.
-De beslispunten worden letterlijk herhaald onder het kopje Samenvatting in de output.
 Maak geen opmerking over het ontbreken van een wettelijke grondslag in Gelet op bij het raadsbesluit.
 Bij een zienswijzeraadsvoorstel controleer je wel of in het raadsvoorstel een juridische grondslag is benoemd waaruit blijkt dat de raad bevoegd is om een zienswijze in te dienen.
 Beoordeel uitsluitend het raadsvoorstel en de raadsbeslispunten, niet het collegevoorstel.
@@ -292,9 +291,6 @@ Gebruik geen gedachtenstreepjes.
 Outputformat
 
 Gebruik exact deze structuur:
-
-Samenvatting
-Maximaal drie zinnen over duidelijkheid, volledigheid en besluitrijpheid. Herhaal hier de beslispunten letterlijk.
 
 Aandachtspunten
 Alleen punten die herstel vereisen.
@@ -349,11 +345,8 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
   "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
   "bevoegdheid": {
     "oordeel": "ja | nee | onduidelijk | niet van toepassing",
-    "typeBevoegdheid": "autonoom | medebewind | zienswijze | toestemming | wensen-en-bedenkingen | kaderstelling | controle | benoeming | toelating | adviesrecht | niet duidelijk",
-    "bevoegdOrgaan": "raad | college | burgemeester | commissie | gemeenschappelijke regeling | onduidelijk",
-    "schuwerToets": "Korte toets volgens de Schuwer-lijn: gaat de raad hier echt over of is sprake van college- of burgemeestersbevoegdheid, controle, zienswijze of kennisname?",
-    "grondslag": "Genoemde wettelijke grondslag of lege string",
-    "terminologieRisico": "Bijvoorbeeld: instemmen waar vaststellen nodig is, benoeming waar toelating nodig is, bindend advies zonder duiding"
+    "toelichting": "Compacte Schuwer-toets: gaat de raad hier echt over of is sprake van college/burgemeestersbevoegdheid, controle, zienswijze of kennisname? Noem ook terminologierisico als dat speelt. Max 3 zinnen.",
+    "grondslag": "Gevonden wettelijke grondslag of lege string"
   },
   "score": {
     "totaal": 74,
@@ -367,7 +360,7 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
       "Juridisch": "groen"
     }
   },
-  "rapport": "Samenvatting\\n[tekst]\\n\\nAandachtspunten\\n[tekst]\\n\\nRisico's\\n[tekst]\\n\\nAdvies\\n[tekst]"
+  "onderbouwing": "Aandachtspunten\\n[tekst]\\n\\nRisico's\\n[tekst]\\n\\nAdvies\\n[tekst]"
 }
 
 Regels:
@@ -382,14 +375,11 @@ Regels:
 - verbeterpunten: alleen aandachtspunten voor rubrieken met toetsprofiel "normaal" of "streng"; maximaal 6
 - raadsvragen: minimaal 3, maximaal 5; concreet en toegespitst op dit voorstel; bij een puur ceremoniële benoeming mag de lijst 2 vragen bevatten
 - bevoegdheid.oordeel: "ja", "nee", "onduidelijk" of "niet van toepassing"
-- bevoegdheid.typeBevoegdheid: kies de best passende juridische categorie; gebruik "niet duidelijk" als het voorstel dit niet scherp maakt
-- bevoegdheid.bevoegdOrgaan: noem het orgaan dat juridisch bevoegd is of vermoedelijk bevoegd is op basis van het voorstel
-- bevoegdheid.schuwerToets: toets expliciet of de raad hier zelf besluit, of dat eerder sprake is van controle, zienswijze, adviesrecht, toestemming, kennisname of een bevoegdheid van college of burgemeester
+- bevoegdheid.toelichting: combineer Schuwer-toets en terminologierisico in max 3 zinnen
 - bevoegdheid.grondslag: gevonden wettelijke grondslag of lege string
-- bevoegdheid.terminologieRisico: noem onzuivere terminologie of geef een lege string als die ontbreekt
 - score.totaal: geheel getal 0-100, aangepast aan het toetsprofiel (niet afrekenen op niet-relevante rubrieken)
 - score.onderdelen: per categorie "groen", "oranje" of "rood"; gebruik "groen" als de rubriek niet relevant is
-- rapport: volg exact de structuur Samenvatting, Aandachtspunten, Risico's, Advies; geen aandachtspunten voor rubrieken met toetsprofiel "niet relevant"
+- onderbouwing: volg exact de structuur Aandachtspunten, Risico's, Advies; geen Samenvatting (staat al in kern); geen herhaling van verbeterpunten-bullets
 
 Concept-raadsvoorstel:
 ${truncated}`;
@@ -409,7 +399,7 @@ ${truncated}`;
   try {
     return JSON.parse(content);
   } catch (e) {
-    return { rapport: content, beslispunten: [], kern: "", verbeterpunten: [] };
+    return { onderbouwing: content, beslispunten: [], kern: "", verbeterpunten: [] };
   }
 }
 

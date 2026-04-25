@@ -19,7 +19,7 @@ const SCAN_STEPS = [
   { label: "Tekst extraheren",         duration: 3500 },
   { label: "Voorstel herkennen",       duration: 5500 },
   { label: "Kwaliteitstoets uitvoeren",duration: 10000 },
-  { label: "Rapport opstellen",        duration: null },  // wacht op response
+  { label: "Onderbouwing opstellen",   duration: null },  // wacht op response
 ];
 
 let scanTimers = [];
@@ -167,7 +167,7 @@ function renderResult(data) {
       "personeel-organisatie":           "Personeel & Organisatie",
       "zienswijze-verbonden-partijen":   "Zienswijze / Verbonden Partijen",
       "regelgeving":                     "Regelgeving",
-      "financien-penc":                  "Financiën & P&C",
+      "financien-penc":                  "Financien & P&C",
       "ruimte-grond-vastgoed":           "Ruimte, Grond & Vastgoed",
       "beleid-kaderstelling":            "Beleid & Kaderstelling",
       "controle-moties-toezeggingen":    "Controle, Moties & Toezeggingen",
@@ -195,7 +195,12 @@ function renderResult(data) {
   // Bevoegdheid
   const bev = data.bevoegdheid || {};
   const oordeel = bev.oordeel || "onduidelijk";
-  const labels = { ja: "✓ Bevoegdheid aangetoond", onduidelijk: "⚠ Onduidelijk", nee: "✗ Ontbreekt" };
+  const labels = {
+    ja: "Bevoegdheid aangetoond",
+    onduidelijk: "Onduidelijk",
+    nee: "Ontbreekt",
+    "niet van toepassing": "Niet van toepassing"
+  };
   document.getElementById("bevoegdheid-content").innerHTML = `
     <div class="bevoegdheid-oordeel ${oordeel}">${labels[oordeel] || oordeel}</div>
     <p class="bevoegdheid-toelichting">${escHtml(bev.toelichting || "")}</p>
@@ -204,9 +209,9 @@ function renderResult(data) {
       : ""}
   `;
 
-  // Rapport
+  // Onderbouwing
   document.getElementById("rapport-content").innerHTML =
-    formatRapport(data.rapport || "");
+    formatOnderbouwing(data.onderbouwing || "");
 
   renderScore(data.score);
 
@@ -254,8 +259,8 @@ function renderScore(score) {
   if (sd) sd.style.display = "";
 }
 
-function formatRapport(tekst) {
-  const secties = ["Samenvatting", "Aandachtspunten", "Risico's", "Advies"];
+function formatOnderbouwing(tekst) {
+  const secties = ["Aandachtspunten", "Risico's", "Advies"];
   const parts = [];
   let remaining = tekst;
 
