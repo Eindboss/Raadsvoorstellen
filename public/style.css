@@ -242,8 +242,7 @@ input[type="url"]:focus {
   padding: 0.75rem 1rem;
 }
 
-.gemeente-badge,
-.classificatie-blok {
+.gemeente-badge {
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 7px;
   background: rgba(255,255,255,0.08);
@@ -258,47 +257,6 @@ input[type="url"]:focus {
   font-size: 0.84rem;
   font-weight: 650;
 }
-
-.classificatie-blok {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.62rem 0.72rem;
-}
-
-.classificatie-hoofd-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.45rem;
-}
-
-.classificatie-hoofd {
-  color: rgba(255,255,255,0.94);
-  font-size: 0.79rem;
-  font-weight: 750;
-  line-height: 1.3;
-}
-
-.classificatie-sub {
-  color: rgba(255,255,255,0.55);
-  font-size: 0.73rem;
-  line-height: 1.38;
-}
-
-.complex-pill {
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-  flex-shrink: 0;
-  font-size: 0.6rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.complex-pill.laag   { background: rgba(34,197,94,0.18); color: #86efac; }
-.complex-pill.middel { background: rgba(245,158,11,0.20); color: #fde68a; }
-.complex-pill.hoog   { background: rgba(248,113,113,0.18); color: #fecaca; }
 
 .score-panel {
   padding: 0.9rem 1rem 1rem;

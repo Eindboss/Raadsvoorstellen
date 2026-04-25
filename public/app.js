@@ -160,35 +160,7 @@ function renderResult(data) {
     document.getElementById("gemeente-badge").classList.remove("hidden");
   }
 
-  // Classificatie
-  const cl = data.classificatie || {};
-  if (cl.hoofdType || cl.subType) {
-    const labelMap = {
-      "personeel-organisatie":           "Personeel & Organisatie",
-      "zienswijze-verbonden-partijen":   "Zienswijze / Verbonden Partijen",
-      "regelgeving":                     "Regelgeving",
-      "financien-penc":                  "Financien & P&C",
-      "ruimte-grond-vastgoed":           "Ruimte, Grond & Vastgoed",
-      "beleid-kaderstelling":            "Beleid & Kaderstelling",
-      "controle-moties-toezeggingen":    "Controle, Moties & Toezeggingen",
-      "bedrijfsvoering-informatie":      "Bedrijfsvoering & Informatie",
-      "sociaal-domein-subsidies":        "Sociaal Domein & Subsidies",
-      "veiligheid-bestuur":              "Veiligheid & Bestuur",
-      "overig":                          "Overig"
-    };
-    const hoofdLabel = labelMap[cl.hoofdType] || cl.hoofdType || "";
-    document.getElementById("classificatie-hoofd").textContent = hoofdLabel;
-    document.getElementById("classificatie-sub").textContent = cl.subType || "";
-
-    const complexEl = document.getElementById("classificatie-complex");
-    if (cl.complexiteit) {
-      complexEl.textContent = cl.complexiteit;
-      complexEl.className = "complex-pill " + cl.complexiteit;
-    }
-    document.getElementById("classificatie-blok").classList.remove("hidden");
-  }
-
-  if (heeftGemeente || cl.hoofdType) {
+  if (heeftGemeente) {
     document.getElementById("voorstel-info").classList.remove("hidden");
   }
 
