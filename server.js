@@ -1,4 +1,5 @@
 try { require("dotenv").config(); } catch (e) {}
+const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -6,7 +7,32 @@ const fetch = require("node-fetch");
 const path = require("path");
 const { OpenAI } = require("openai");
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const VALID_HOOFD_TYPES = [
+  "personeel-organisatie",
+  "zienswijze-verbonden-partijen",
+  "regelgeving",
+  "financien-penc",
+  "ruimte-grond-vastgoed",
+  "beleid-kaderstelling",
+  "controle-moties-toezeggingen",
+  "bedrijfsvoering-informatie",
+  "sociaal-domein-subsidies",
+  "veiligheid-bestuur",
+  "overig"
+];
+
+const TYPE_GAPS_PATH = path.join(__dirname, "public", "type-gaps.json");
+let typeGapsCache = {};
+try {
+  typeGapsCache = JSON.parse(fs.readFileSync(TYPE_GAPS_PATH, "utf8"));
+  console.log(`[startup] type-gaps.json geladen: ${Object.keys(typeGapsCache).length} types`);
+} catch (e) {
+  console.warn("[startup] type-gaps.json niet gevonden, dynamische context uitgeschakeld");
+}
 
 const app = express();
 const upload = multer({
@@ -369,10 +395,71 @@ Een of twee concrete herstelacties, geordend naar prioriteit.
 
 ${SCHUWER_BEVOEGDHEID_RAAD}`;
 
-async function callOpenAI(text) {
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
+async function classifyProposal(text) {
+  if (!process.env.OPENAI_API_KEY) return "overig";
+
+  const snippet = text.slice(0, 3000);
+  const prompt = `Classificeer dit raadsvoorstel naar een van de volgende types:
+${VALID_HOOFD_TYPES.join(", ")}
+
+Antwoord met alleen het type, zonder uitleg.
+
+VOORSTEL:
+${snippet}`;
+
+  const classifyCall = openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    max_tokens: 20,
+    messages: [{ role: "user", content: prompt }]
+  })
+    .then(resp => {
+      const raw = (resp.choices?.[0]?.message?.content || "").trim().toLowerCase();
+      return VALID_HOOFD_TYPES.includes(raw) ? raw : "overig";
+    })
+    .catch(err => {
+      console.warn("[classify] fout:", err.message);
+      return "overig";
+    });
+
+  return withTimeout(classifyCall, 8000, "overig");
+}
+
+function buildDynamicContext(hoofdType) {
+  const gaps = typeGapsCache[hoofdType];
+  if (hoofdType === "overig" || !Array.isArray(gaps) || gaps.length === 0) return "";
+
+  const lines = gaps.slice(0, 3).map(g =>
+    `- ${g.informatie_type}: ${g.check} (speelde bij ${g.n_voorstellen} vergelijkbare voorstellen)`
+  ).join("\n");
+
+  return `\nHistorische vraagpatronen voor dit voorsteltype (${hoofdType}):
+Bij vergelijkbare voorstellen kwamen in het verleden vaak vragen over onderstaande onderwerpen. Dit is geen bewijs dat het huidige voorstel tekortschiet. Gebruik dit alleen als extra aandachtslijst.
+Formuleer alleen een aandachtspunt als je in de aangeleverde voorsteltekst concreet kunt aanwijzen dat de informatie ontbreekt en het punt relevant is volgens het toetsprofiel.
+Als de informatie aanwezig is, of als je het ontbreken niet concreet kunt onderbouwen: geen aandachtspunt. Het toetsprofiel blijft leidend. Negeer een punt als het voor dit subtype niet relevant is of als de rubriek op "niet relevant" staat.
+
+${lines}
+`;
+}
+
+function buildSystemPrompt(dynamicContext) {
+  if (!dynamicContext) return SYSTEM_PROMPT;
+  return SYSTEM_PROMPT.replace("\nGedragsregels", `${dynamicContext}\nGedragsregels`);
+}
+
+async function callOpenAI(text, dynamicMetadata = { hoofdType: "overig", dynamicContext: "", gapsGebruikt: [] }) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
+  if (!openai) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
 
   const truncated = text.slice(0, 60000);
+  const dynamicContextActive = Boolean(dynamicMetadata.dynamicContext);
 
   const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
 Stap 1: classificeer het voorstel volledig (hoofdType, subType, complexiteit, toetsprofiel).
@@ -383,6 +470,9 @@ Stap 4: voer bij bevoegdheid expliciet de Schuwer-toets uit.
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
   "gemeente": "Amsterdam",
+  "hoofd_type": "${dynamicMetadata.hoofdType}",
+  "dynamische_context_actief": ${dynamicContextActive},
+  "gaps_gebruikt": ${JSON.stringify(dynamicMetadata.gapsGebruikt)},
   "classificatie": {
     "hoofdType": "personeel-organisatie | zienswijze-verbonden-partijen | regelgeving | financien-penc | ruimte-grond-vastgoed | beleid-kaderstelling | controle-moties-toezeggingen | bedrijfsvoering-informatie | sociaal-domein-subsidies | veiligheid-bestuur | overig",
     "subType": "specifiek subtype in gewone taal, bijv. 'kredietaanvraag renovatie gemeentelijk vastgoed'",
@@ -427,6 +517,9 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
 
 Regels:
 - gemeente: naam van de gemeente herkenbaar uit briefhoofd, aanhef of documentopmaak. Alleen de gemeentenaam, bijv. "Ridderkerk". Als onbekend: "Onbekend".
+- hoofd_type: neem exact de vooraf bepaalde hoofd_type metadata over: "${dynamicMetadata.hoofdType}"
+- dynamische_context_actief: neem exact de metadatawaarde over: ${dynamicContextActive}
+- gaps_gebruikt: neem exact deze lijst over: ${JSON.stringify(dynamicMetadata.gapsGebruikt)}
 - classificatie.hoofdType: kies precies een van de genoemde waarden
 - classificatie.subType: omschrijf het specifieke subtype in gewone taal (geen code, geen enum)
 - classificatie.complexiteit: "laag" voor eenvoudige benoemingen of zienswijzen, "hoog" voor complexe financiele of juridische voorstellen
@@ -452,16 +545,28 @@ ${truncated}`;
     max_tokens: 3000,
     response_format: { type: "json_object" },
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: buildSystemPrompt(dynamicMetadata.dynamicContext) },
       { role: "user", content: userPrompt }
     ]
   });
 
   const content = response.choices?.[0]?.message?.content || "{}";
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    parsed.hoofd_type = dynamicMetadata.hoofdType;
+    parsed.dynamische_context_actief = dynamicContextActive;
+    parsed.gaps_gebruikt = dynamicMetadata.gapsGebruikt;
+    return parsed;
   } catch (e) {
-    return { onderbouwing: content, beslispunten: [], kern: "", verbeterpunten: [] };
+    return {
+      hoofd_type: dynamicMetadata.hoofdType,
+      dynamische_context_actief: dynamicContextActive,
+      gaps_gebruikt: dynamicMetadata.gapsGebruikt,
+      onderbouwing: content,
+      beslispunten: [],
+      kern: "",
+      verbeterpunten: []
+    };
   }
 }
 
@@ -491,7 +596,19 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
       return res.status(422).json({ error: "De PDF bevat te weinig tekst om te analyseren." });
     }
 
-    const result = await callOpenAI(text);
+    const hoofdType = await classifyProposal(text);
+    const dynamicContext = buildDynamicContext(hoofdType);
+    const gapsGebruikt = Array.isArray(typeGapsCache[hoofdType])
+      ? typeGapsCache[hoofdType].slice(0, 3).map(g => g.informatie_type)
+      : [];
+
+    console.log(`[toets] hoofd_type=${hoofdType} gaps=${typeGapsCache[hoofdType]?.length ?? 0} dynamic=${dynamicContext.length > 0}`);
+
+    const result = await callOpenAI(text, {
+      hoofdType,
+      dynamicContext,
+      gapsGebruikt: dynamicContext ? gapsGebruikt : []
+    });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message || "Onbekende fout." });

@@ -1,0 +1,87 @@
+{
+  "beleid-kaderstelling": [
+    {
+      "informatie_type": "uitvoering",
+      "n_voorstellen": 37,
+      "check": "Beschrijft het voorstel wie verantwoordelijk is voor uitvoering, welke stappen volgen en hoe voortgang wordt bewaakt?"
+    },
+    {
+      "informatie_type": "participatie",
+      "n_voorstellen": 33,
+      "check": "Beschrijft het voorstel wie is betrokken, hoe participatie is uitgevoerd en wat met de inbreng is gedaan?"
+    },
+    {
+      "informatie_type": "financieel",
+      "n_voorstellen": 21,
+      "check": "Zijn de financiele gevolgen, dekking, onderbouwing van ramingen en gevolgen bij tegenvallers concreet beschreven?"
+    }
+  ],
+  "financien-penc": [
+    {
+      "informatie_type": "financieel",
+      "n_voorstellen": 77,
+      "check": "Zijn de financiele gevolgen, dekking, onderbouwing van ramingen en gevolgen bij tegenvallers concreet beschreven?"
+    },
+    {
+      "informatie_type": "uitvoering",
+      "n_voorstellen": 63,
+      "check": "Beschrijft het voorstel wie verantwoordelijk is voor uitvoering, welke stappen volgen en hoe voortgang wordt bewaakt?"
+    },
+    {
+      "informatie_type": "risico",
+      "n_voorstellen": 49,
+      "check": "Bevat het voorstel concrete risicos, gevolgen en mitigerende maatregelen die relevant zijn voor besluitvorming?"
+    }
+  ],
+  "regelgeving": [
+    {
+      "informatie_type": "juridisch",
+      "n_voorstellen": 21,
+      "check": "Benoemt het voorstel de juridische grondslag, bevoegdheid en relevante juridische risicos voldoende concreet?"
+    },
+    {
+      "informatie_type": "uitvoering",
+      "n_voorstellen": 19,
+      "check": "Beschrijft het voorstel wie verantwoordelijk is voor uitvoering, welke stappen volgen en hoe voortgang wordt bewaakt?"
+    },
+    {
+      "informatie_type": "financieel",
+      "n_voorstellen": 16,
+      "check": "Zijn de financiele gevolgen, dekking, onderbouwing van ramingen en gevolgen bij tegenvallers concreet beschreven?"
+    }
+  ],
+  "ruimte-grond-vastgoed": [
+    {
+      "informatie_type": "uitvoering",
+      "n_voorstellen": 27,
+      "check": "Beschrijft het voorstel wie verantwoordelijk is voor uitvoering, welke stappen volgen en hoe voortgang wordt bewaakt?"
+    },
+    {
+      "informatie_type": "risico",
+      "n_voorstellen": 19,
+      "check": "Bevat het voorstel concrete risicos, gevolgen en mitigerende maatregelen die relevant zijn voor besluitvorming?"
+    },
+    {
+      "informatie_type": "financieel",
+      "n_voorstellen": 18,
+      "check": "Zijn de financiele gevolgen, dekking, onderbouwing van ramingen en gevolgen bij tegenvallers concreet beschreven?"
+    }
+  ],
+  "zienswijze-verbonden-partijen": [
+    {
+      "informatie_type": "financieel",
+      "n_voorstellen": 26,
+      "check": "Zijn de financiele gevolgen, dekking, onderbouwing van ramingen en gevolgen bij tegenvallers concreet beschreven?"
+    },
+    {
+      "informatie_type": "uitvoering",
+      "n_voorstellen": 19,
+      "check": "Beschrijft het voorstel wie verantwoordelijk is voor uitvoering, welke stappen volgen en hoe voortgang wordt bewaakt?"
+    },
+    {
+      "informatie_type": "risico",
+      "n_voorstellen": 11,
+      "check": "Bevat het voorstel concrete risicos, gevolgen en mitigerende maatregelen die relevant zijn voor besluitvorming?"
+    }
+  ]
+}
