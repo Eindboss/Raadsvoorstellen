@@ -13,6 +13,52 @@ const resultGrid = document.getElementById("result-grid");
 
 let mode = "pdf";
 
+// ── Scan animatie ──────────────────────────────────────────
+const SCAN_STEPS = [
+  { label: "Document inladen",         duration: 2200 },
+  { label: "Tekst extraheren",         duration: 3500 },
+  { label: "Voorstel herkennen",       duration: 5500 },
+  { label: "Kwaliteitstoets uitvoeren",duration: 10000 },
+  { label: "Rapport opstellen",        duration: null },  // wacht op response
+];
+
+let scanTimers = [];
+
+function startScanAnimation() {
+  const stepEls = document.querySelectorAll(".scan-step");
+  stepEls.forEach(el => el.className = "scan-step");
+
+  let current = 0;
+  stepEls[0].classList.add("active");
+
+  function advance() {
+    if (current >= stepEls.length - 1) return;
+    stepEls[current].classList.remove("active");
+    stepEls[current].classList.add("done");
+    current++;
+    stepEls[current].classList.add("active");
+    const next = SCAN_STEPS[current];
+    if (next && next.duration) {
+      scanTimers.push(setTimeout(advance, next.duration));
+    }
+  }
+
+  const first = SCAN_STEPS[0];
+  if (first.duration) {
+    scanTimers.push(setTimeout(advance, first.duration));
+  }
+}
+
+function stopScanAnimation() {
+  scanTimers.forEach(t => clearTimeout(t));
+  scanTimers = [];
+  // Alle stappen afronden
+  document.querySelectorAll(".scan-step").forEach(el => {
+    el.classList.remove("active");
+    el.classList.add("done");
+  });
+}
+
 // Klik op file-name opent file dialog
 fileNameEl.addEventListener("click", () => pdfFileInput.click());
 
@@ -74,9 +120,16 @@ function setStatus(state, msg) {
   statusLoading.classList.add("hidden");
   statusError.classList.add("hidden");
 
-  if (state === "idle") statusIdle.classList.remove("hidden");
-  if (state === "loading") statusLoading.classList.remove("hidden");
+  if (state === "idle") {
+    statusIdle.classList.remove("hidden");
+    stopScanAnimation();
+  }
+  if (state === "loading") {
+    statusLoading.classList.remove("hidden");
+    startScanAnimation();
+  }
   if (state === "error") {
+    stopScanAnimation();
     errorMessage.textContent = msg || "Onbekende fout.";
     statusError.classList.remove("hidden");
   }
