@@ -272,7 +272,21 @@ of niet is beschreven hoe de voortgang wordt bewaakt of gerapporteerd aan de raa
 
 Weeg dit minder zwaar bij benoemingen, zienswijzen en kennisname-voorstellen.
 
-9. Juridische kwaliteit
+9. Risico
+
+Controleer of het voorstel bekende risico's benoemt en hoe daarmee wordt omgegaan.
+
+Signaleer als:
+het voorstel geen risicoparagraaf bevat terwijl er sprake is van financiele,
+juridische of uitvoeringsrisico's,
+risico's worden afgedaan met "de risico's zijn beperkt" zonder onderbouwing,
+of er geen mitigerende maatregel of terugvaloptie is beschreven.
+
+Beoordeel dit alleen bij voorstellen met substantiele financiele, juridische
+of maatschappelijke impact. Sla deze rubriek over bij eenvoudige benoemingen,
+kennisname-voorstellen en zienswijzen.
+
+10. Juridische kwaliteit
 
 Controleer:
 consistente terminologie,
@@ -282,11 +296,11 @@ en correcte interne verwijzingen.
 
 Controleer niet standaard of in het raadsbesluit onder Gelet op een wettelijke grondslag is opgenomen.
 
-10. Proces en planning
+11. Proces en planning
 
 Voer een lichte check uit op logische agendering en evidente procedurele fouten.
 
-11. Naamgeving
+12. Naamgeving
 
 Controleer of de titel duidelijk is, niet onnodig lang is, geen afkortingen bevat en aansluit bij de inhoud.
 
@@ -299,6 +313,7 @@ Bij een zienswijzeraadsvoorstel controleer je wel of in het raadsvoorstel een ju
 Beoordeel uitsluitend het raadsvoorstel en de raadsbeslispunten, niet het collegevoorstel.
 Een zienswijzebrief die als concept in .docx is bijgevoegd, is gebruikelijk en correct.
 Toets uitvoering alleen als het voorstel een nieuw beleid, krediet, project of maatregel betreft. Sla uitvoering over bij benoemingen, zienswijzen en kennisname.
+Toets risico alleen bij voorstellen met substantiele financiele, juridische of maatschappelijke impact. Sla over bij benoemingen, kennisname en zienswijzen.
 
 Gedragsregels
 
