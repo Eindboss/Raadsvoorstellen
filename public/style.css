@@ -20,6 +20,130 @@
 
 html, body { height: 100%; overflow: hidden; }
 
+/* ── Mobiel ──────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  html, body { height: auto; overflow: auto; }
+
+  .shell {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Sidebar wordt compacte topbalk */
+  .left-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .brand { margin-bottom: 1rem; }
+
+  /* Upload sectie horizontaal op mobiel */
+  .upload-section { margin-bottom: 0; }
+
+  .tabs { margin-bottom: 0.75rem; }
+
+  .input-group { margin-bottom: 0.6rem; }
+
+  /* Score panel: horizontaal (gauge links, cats rechts) */
+  .score-panel {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 1rem;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+  }
+
+  .score-gauge { flex-shrink: 0; }
+
+  .score-label { text-align: left; }
+
+  .score-cats {
+    flex-direction: column;
+    margin-top: 0;
+    flex: 1;
+  }
+
+  /* Classificatie + gemeente onder score */
+  .voorstel-info { margin-top: 0.75rem; }
+
+  /* Footer weghalen op mobiel (ruimte besparen) */
+  .left-footer { display: none; }
+
+  /* Touch-vriendelijke knoppen */
+  .btn-primary { padding: 0.85rem; font-size: 0.95rem; }
+  .tab { padding: 0.45rem 1rem; font-size: 0.85rem; }
+  .file-name { padding: 0.65rem 0.75rem; }
+
+  input[type="url"] { font-size: 1rem; padding: 0.65rem 0.75rem; }
+
+  /* Dashboard */
+  .dashboard {
+    overflow: visible;
+    padding: 0.75rem;
+  }
+
+  /* Lege staat */
+  .empty-state {
+    padding: 2rem 1rem;
+    justify-content: flex-start;
+  }
+
+  .empty-icon-svg { width: 56px; height: 56px; margin-bottom: 1rem; }
+
+  /* Resultaat grid: 1 kolom, auto hoogte */
+  .result-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* Cards: geen vaste hoogte, scrollen niet intern maar met pagina mee */
+  .dash-card {
+    overflow: visible;
+  }
+
+  .dash-card ol,
+  .dash-card ul,
+  .card-kern p,
+  .rapport-scroll {
+    overflow: visible;
+    max-height: none;
+  }
+
+  /* Side-kolom: gewoon stapelen */
+  .card-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  /* Grid plaatsingen resetten — niet nodig bij flex */
+  .card-beslispunten,
+  .card-kern,
+  .card-vragen,
+  .card-rapport,
+  .card-side { grid-column: unset; grid-row: unset; }
+
+  /* Volgorde op mobiel: kern eerst, dan beslispunten, rapport, vragen, side */
+  .card-kern        { order: 1; }
+  .card-beslispunten{ order: 2; }
+  .card-rapport     { order: 3; }
+  .card-vragen      { order: 4; }
+  .card-side        { order: 5; }
+
+  /* Rapport geen interne scroll */
+  .rapport-sectie p { white-space: pre-wrap; }
+}
+
 body {
   font-family: 'Lora', Georgia, serif;
   font-size: 15px;
