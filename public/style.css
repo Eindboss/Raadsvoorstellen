@@ -479,7 +479,7 @@ input[type="url"]:focus-visible {
   border-left: 3px solid var(--accent);
 }
 
-/* Rechterkolom */
+/* Rechterkolom: zelf scrollt, kaarten groeien mee met inhoud */
 .card-right {
   grid-column: 2;
   grid-row: 2;
@@ -489,6 +489,20 @@ input[type="url"]:focus-visible {
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
+}
+
+/* Kaarten in rechterkolom: geen vaste hoogte, geen interne scroll */
+.card-right .dash-card {
+  overflow: visible;
+  flex-shrink: 0;
+  height: auto;
+}
+
+.card-right .dash-card ol,
+.card-right .dash-card ul {
+  overflow: visible;
+  flex: none;
+  max-height: none;
 }
 
 /* ── Cards ───────────────────────────────────────────────── */
