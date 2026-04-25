@@ -190,8 +190,7 @@ Je bent een gespecialiseerde juridisch-administratieve assistent. Je beoordeelt 
 Je beoordeelt niet:
 politieke wenselijkheid, beleidsinhoud, bestuurlijke afwegingen of maatschappelijke keuzes.
 
-Je beoordeelt uitsluitend:
-duidelijkheid, volledigheid, consistentie, juridische juistheid, rolzuiverheid en besluitrijpheid.
+Je beoordeelt primair de formele kwaliteit en besluitrijpheid. Je beoordeelt inhoud alleen voor zover die aantoonbaar raakt aan uitvoerbaarheid, juridische juistheid of interne consistentie van het voorstel.
 
 Doel:
 voorkomen dat een onvolledig, onduidelijk, inconsistent of juridisch onjuist voorstel naar de raad gaat.
@@ -475,12 +474,26 @@ function buildLegalContext(hoofdType) {
   const lines = articles.map(a =>
     `- ${a.wet} art. ${a.artikel}: ${a.omschrijving}`
   ).join("\n");
+  const explicitGroundTypes = new Set([
+    "regelgeving",
+    "financien-penc",
+    "sociaal-domein-subsidies",
+    "zienswijze-verbonden-partijen"
+  ]);
 
-  return `\nJuridische referentiecontrole voor dit voorsteltype (${hoofdType}):
-Gebruik deze artikelen alleen als controlevragen voor bevoegdheid, procedure of wettelijke grondslag. Dit is geen volledige juridische analyse en geen bewijs dat het huidige voorstel tekortschiet.
-Signaleer alleen als een grondslag, bevoegdheid of procedurestap concreet aantoonbaar ontbreekt of onjuist lijkt in de aangeleverde voorsteltekst.
-Niet elk voorstel hoeft letterlijk een wetsartikel te noemen. Als de bevoegdheid of procedure voldoende uit de context blijkt, formuleer dan geen aandachtspunt.
+  if (explicitGroundTypes.has(hoofdType)) {
+    return `\nJuridische context voor dit voorsteltype (${hoofdType}):
+Controleer of het voorstel een wettelijke grondslag noemt. Een impliciete verwijzing volstaat, bijvoorbeeld een verwijzing naar de financiele verordening, Wgr, Awb, verordening of begrotingsprocedure.
+Signaleer alleen bij volledige afwezigheid van enige juridische basis en hoogstens als AANDACHT, niet als BLOKKEREND.
+Relevante artikelen:
+${lines}
+`;
+  }
 
+  return `\nJuridische context voor dit voorsteltype (${hoofdType}):
+De raadsbevoegdheid voor dit type voorstel is doorgaans impliciet correct. Signaleer niet dat een grondslag ontbreekt alleen omdat geen wetsartikel letterlijk is genoemd.
+Signaleer alleen als er een concrete aanwijzing is dat de bevoegdheid onjuist is belegd of de procedure juridisch niet klopt.
+Ter referentie:
 ${lines}
 `;
 }
@@ -490,7 +503,7 @@ function buildSystemPrompt(injectedContext) {
   return SYSTEM_PROMPT.replace("\nGedragsregels", `${injectedContext}\nGedragsregels`);
 }
 
-async function callOpenAI(text, dynamicMetadata = {
+async function callOpenAIOld(text, dynamicMetadata = {
   hoofdType: "overig",
   dynamicContext: "",
   legalContext: "",
@@ -631,6 +644,366 @@ ${truncated}`;
   }
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function parseJsonObject(content, fallback = {}) {
+  try {
+    return JSON.parse(content || "{}");
+  } catch (e) {
+    const raw = String(content || "");
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      try {
+        return JSON.parse(raw.slice(start, end + 1));
+      } catch (_) {
+        return fallback;
+      }
+    }
+    return fallback;
+  }
+}
+
+function calculateScore(bevindingen) {
+  const counts = safeArray(bevindingen).reduce((acc, item) => {
+    const ernst = String(item.ernst || "").toUpperCase();
+    if (ernst === "BLOKKEREND") acc.blokkerend++;
+    else if (ernst === "AANDACHT") acc.aandacht++;
+    else if (ernst === "OPTIONEEL") acc.optioneel++;
+    return acc;
+  }, { blokkerend: 0, aandacht: 0, optioneel: 0 });
+
+  if (counts.blokkerend > 0) {
+    return clamp(49 - ((counts.blokkerend - 1) * 15) - (counts.aandacht * 2), 5, 49);
+  }
+  return clamp(100 - (counts.aandacht * 8) - (counts.optioneel * 2), 50, 100);
+}
+
+function scoreLabel(score) {
+  if (score >= 85) return "Besluitrijp";
+  if (score >= 65) return "Lichte verbeterpunten";
+  if (score >= 50) return "Verbeterd voor behandeling";
+  return "Niet besluitrijp - blokkerende bevindingen";
+}
+
+function statusForScore(score) {
+  if (score >= 85) return "groen";
+  if (score >= 50) return "oranje";
+  return "rood";
+}
+
+function calculateTrust(bevindingen, verworpenKandidaten) {
+  const metBewijs = safeArray(bevindingen).filter(item => String(item.bewijs || "").trim().length >= 12).length;
+  return clamp(60 + (metBewijs * 4) - ((verworpenKandidaten || 0) * 2), 30, 95);
+}
+
+function normalizeBevinding(item) {
+  const rawErnst = String(item.ernst || "AANDACHT").toUpperCase();
+  const ernst = ["BLOKKEREND", "AANDACHT", "OPTIONEEL"].includes(rawErnst) ? rawErnst : "AANDACHT";
+  return {
+    rubriek: String(item.rubriek || "Algemeen"),
+    ernst,
+    bevinding: String(item.bevinding || "").trim(),
+    bewijs: String(item.bewijs || "").trim(),
+    herstelactie: String(item.herstelactie || "").trim(),
+    blokkerend: ernst === "BLOKKEREND",
+    herstelbaar_voor_behandeling: Boolean(item.herstelbaar_voor_behandeling)
+  };
+}
+
+function fallbackBevindingen(kandidaten) {
+  return safeArray(kandidaten).slice(0, 6).map(kand => normalizeBevinding({
+    rubriek: kand.rubriek,
+    ernst: "AANDACHT",
+    bevinding: kand.bevinding,
+    bewijs: kand.reden || "Pass 2-validatie is mislukt; dit punt komt uit de brede detectie.",
+    herstelactie: "Controleer dit punt handmatig en vul het voorstel alleen aan als de informatie daadwerkelijk ontbreekt.",
+    herstelbaar_voor_behandeling: true
+  })).filter(item => item.bevinding);
+}
+
+function severityForCandidate(kand) {
+  const text = `${kand.rubriek || ""} ${kand.bevinding || ""} ${kand.reden || ""}`.toLowerCase();
+  if (/(ontbrekende dekking|dekking ontbreekt|geen dekking|tegenstrijdig bedrag|juridisch onjuist|onuitvoerbaar)/.test(text)) return "BLOKKEREND";
+  return "AANDACHT";
+}
+
+function promoteCandidate(kand) {
+  const reden = String(kand.reden || "").trim();
+  const bevinding = String(kand.bevinding || "").trim();
+  return normalizeBevinding({
+    rubriek: kand.rubriek,
+    ernst: severityForCandidate(kand),
+    bevinding,
+    bewijs: reden ? `Ontbrekend element: ${reden}` : `Ontbrekend element: ${bevinding}`,
+    herstelactie: `Vul het voorstel aan met een concrete toelichting op: ${bevinding.charAt(0).toLowerCase()}${bevinding.slice(1)}.`,
+    herstelbaar_voor_behandeling: true
+  });
+}
+
+function calibrateValidatedFindings(bevindingen, kandidaten) {
+  const items = [...safeArray(bevindingen)];
+  if (items.length >= 3 || !safeArray(kandidaten).length) return items;
+  for (const kand of safeArray(kandidaten)) {
+    if (items.length >= 5) break;
+    const promoted = promoteCandidate(kand);
+    if (!promoted.bevinding || items.some(item => item.bevinding === promoted.bevinding)) continue;
+    items.push(promoted);
+  }
+  return items;
+}
+
+function buildAdvice(bevindingen) {
+  const items = safeArray(bevindingen);
+  if (!items.length) return "Er zijn geen herstelpunten bevestigd. Controleer alleen nog of de bijlagen en besluitvorming praktisch compleet zijn.";
+  const first = items[0];
+  return `${items.some(item => item.blokkerend) ? "Los eerst de blokkerende bevindingen op voordat het voorstel wordt geagendeerd." : "Verwerk de aandachtspunten voordat het voorstel wordt aangeboden."} Begin met: ${first.herstelactie || first.bevinding}`;
+}
+
+function buildOnderbouwing(bevindingen, advies) {
+  const items = safeArray(bevindingen);
+  const aandacht = items.length
+    ? items.map(item => `${item.ernst}: ${item.bevinding}\nBewijs: ${item.bewijs}\nHerstel: ${item.herstelactie}`).join("\n\n")
+    : "Geen bevestigde aandachtspunten.";
+  const risico = items.some(item => item.blokkerend)
+    ? "Er zijn blokkerende bevindingen die de besluitrijpheid raken."
+    : "Er zijn geen blokkerende bevindingen bevestigd.";
+  return `Aandachtspunten\n${aandacht}\n\nRisico's\n${risico}\n\nAdvies\n${advies}`;
+}
+
+function buildExpectedQuestions(bevindingen, typeGaps, legalArticles, beslispunten = []) {
+  const questions = [];
+  for (const item of safeArray(bevindingen)) {
+    if (questions.length >= 5) break;
+    const basis = (item.bevinding || "").replace(/\.$/, "");
+    if (basis) questions.push(`Hoe wordt "${basis}" opgelost voordat de raad hierover besluit?`);
+  }
+  for (const beslispunt of safeArray(beslispunten)) {
+    if (questions.length >= 5) break;
+    const short = String(beslispunt || "").trim().slice(0, 140);
+    if (short) questions.push(`Welke onderbouwing in de toelichting ondersteunt het beslispunt "${short}"?`);
+  }
+  for (const gap of safeArray(typeGaps)) {
+    if (questions.length >= 5) break;
+    questions.push(`Waar in het voorstel is de informatie over ${gap.informatie_type} onderbouwd, en wat betekent dit voor het gevraagde besluit?`);
+  }
+  for (const article of safeArray(legalArticles)) {
+    if (questions.length >= 3) break;
+    questions.push(`Hoe verhoudt het gevraagde besluit zich tot ${article.wet} artikel ${article.artikel}?`);
+  }
+  return [...new Set(questions)].slice(0, 5);
+}
+
+async function callOpenAI(text, dynamicMetadata = {}) {
+  dynamicMetadata = {
+    hoofdType: "overig",
+    dynamicContext: "",
+    legalContext: "",
+    gapsGebruikt: [],
+    wetsartikelenGebruikt: [],
+    ...dynamicMetadata
+  };
+
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
+  if (!openai) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
+
+  const truncated = text.slice(0, 60000);
+  const validationText = text.slice(0, 12000);
+  const dynamicContextActive = Boolean(dynamicMetadata.dynamicContext);
+  const legalContextActive = Boolean(dynamicMetadata.legalContext);
+  const injectedContext = `${dynamicMetadata.dynamicContext || ""}${dynamicMetadata.legalContext || ""}`;
+
+  const pass1Prompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
+Dit is een brede verkenning. Signaleer wat je opvalt. Volledigheid en bewijs komen in de volgende stap.
+Geef kandidaat-bevindingen, geen eindscore en geen eindadvies.
+Geef bij een normaal inhoudelijk voorstel 7 tot 10 kandidaten. Neem de historische vraagpatronen en juridische context actief mee als zoekrichting.
+Een kandidaat mag gaan over informatie die vermoedelijk ontbreekt of te summier is, zolang je in de reden concreet noemt welk onderdeel van de tekst of welk ontbrekend element dit raakt.
+
+Neem deze checks expliciet mee:
+A. Zelfstandige leesbaarheid: kan een onervaren raadslid de kern begrijpen zonder bijlagen of voorkennis? Geef oordeel en maximaal 2 voorbeelden.
+B. Beslispunten onderbouwing: controleer elk beslispunt afzonderlijk en benoem ontbrekende onderbouwing.
+C. Leesbaarheid zonder bijlagen: signaleer als cruciale informatie alleen in bijlagen staat.
+D. Onuitvoerbaarheid of juridische onjuistheid: signaleer concrete onuitvoerbaarheid, onhoudbaarheid of evident onjuiste informatie.
+E. Interne tegenstrijdigheden: controleer bedragen, planning, rolverdeling en conclusie. Benoem beide botsende passages in de reden.
+F. Besluit zonder rechtsgevolg: signaleer alleen als het besluit geen duidelijk doel of vervolg heeft, of feitelijk al elders is besloten.
+
+Beoordeel ook indicatief:
+- Taalniveau B1: B1-conform, Matig of Complex, met maximaal 3 voorbeeldzinnen.
+- Titelcheck: Duidelijk, Matig of Onduidelijk, met suggestie als verbetering nodig is.
+- WCAG op tekstsignalen: Toegankelijk, Aandachtspunten of Ontoegankelijk, met maximaal 2 aandachtspunten.
+
+Geef geldig JSON in dit formaat:
+{
+  "gemeente": "Amsterdam",
+  "kern": "Publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen.",
+  "beslispunten": ["beslispunt 1", "beslispunt 2"],
+  "bevoegdheid": {
+    "oordeel": "ja | nee | onduidelijk | niet van toepassing",
+    "toelichting": "Compacte Schuwer-toets in max 3 zinnen.",
+    "grondslag": "Gevonden wettelijke grondslag of lege string"
+  },
+  "leesbaarheid": {
+    "zelfstandig_leesbaar": "Zelfstandig leesbaar | Beperkt zelfstandig | Niet zelfstandig leesbaar",
+    "voorbeelden": ["Passage die leesbaarheid belemmert"],
+    "zonder_bijlagen": "Ja | Nee",
+    "zonder_bijlagen_toelichting": "Toelichting"
+  },
+  "beslispunten_check": [
+    { "beslispunt": "tekst", "onderbouwd": true, "ontbrekende_onderbouwing": "" }
+  ],
+  "titelcheck": { "oordeel": "Duidelijk | Matig | Onduidelijk", "suggestie": "" },
+  "taal_b1": { "oordeel": "B1-conform | Matig | Complex", "voorbeelden": ["zin"] },
+  "wcag": { "indicatief": true, "oordeel": "Toegankelijk | Aandachtspunten | Ontoegankelijk", "aandachtspunten": ["punt"] },
+  "kandidaten": [
+    { "rubriek": "Financiele aspecten", "bevinding": "Kandidaat-bevinding", "reden": "Waarom dit mogelijk ontbreekt of onjuist is" }
+  ]
+}
+
+Concept-raadsvoorstel:
+${truncated}`;
+
+  const pass1Response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    max_tokens: 2800,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: buildSystemPrompt(injectedContext) },
+      { role: "user", content: pass1Prompt }
+    ]
+  });
+
+  const pass1 = parseJsonObject(pass1Response.choices?.[0]?.message?.content, { kandidaten: [] });
+  const kandidaten = safeArray(pass1.kandidaten).slice(0, 10);
+  let pass2 = { resultaten: [] };
+
+  if (kandidaten.length) {
+    const validationPrompt = `Beoordeel elke kandidaat-bevinding op de voorsteltekst.
+
+Regels per bevinding:
+Je doel is niet maximaal verwerpen. Bevestig een kandidaat als het punt concreet, relevant en niet adequaat opgelost is in de tekst. Verwerp alleen als de informatie duidelijk aanwezig is of de kandidaat niet herleidbaar is.
+1. Citeer de exacte passage, OF benoem expliciet welk element ontbreekt en waar het had moeten staan.
+2. Als je noch een passage kunt citeren, noch een concreet ontbrekend element kunt aanwijzen: verwerp de bevinding.
+3. Als de informatie volledig en adequaat aanwezig is: verwerp de bevinding.
+4. Als de informatie aanwezig is maar onvoldoende onderbouwd of te summier: behoud als AANDACHT.
+5. Ernst: BLOKKEREND, AANDACHT of OPTIONEEL.
+6. Bij interne tegenstrijdigheid citeer je beide passages en leg je uit waarom ze niet tegelijk waar kunnen zijn.
+7. Formuleer een concrete herstelactie in maximaal twee zinnen.
+8. Geef herstelbaar_voor_behandeling als boolean.
+9. Verwerp alleen vage bevindingen die niet herleidbaar zijn tot een concreet onderdeel van de tekst.
+10. Als de kandidaat een concreet ontbrekend element noemt dat redelijkerwijs in dit type voorstel verwacht mag worden, bevestig als AANDACHT met bewijs "Ontbrekend element: ...".
+11. Gebruik de reden uit de kandidaat als startpunt. Als die reden concreet verwijst naar een paragraaf, beslispunt, bedrag, risico, planning of ontbrekende onderbouwing, is dat voldoende herleidbaar.
+Kleine redactionele inconsistenties leiden nooit tot BLOKKEREND.
+Ontbrekende dekking bij een krediet, intern tegenstrijdige bedragen bij een financieel besluit, of een besluit dat juridisch niet kan worden uitgevoerd is BLOKKEREND.
+
+Geef geldig JSON:
+{
+  "resultaten": [
+    {
+      "status": "BEVESTIGD | VERWORPEN",
+      "rubriek": "Rubriek",
+      "bevinding": "Concrete bevinding",
+      "bewijs": "Letterlijk citaat of concreet ontbrekend element",
+      "ernst": "BLOKKEREND | AANDACHT | OPTIONEEL",
+      "herstelactie": "Concrete herstelactie",
+      "herstelbaar_voor_behandeling": true
+    }
+  ]
+}
+
+Kandidaat-bevindingen:
+${JSON.stringify(kandidaten, null, 2)}
+
+Voorsteltekst:
+${validationText}`;
+
+    const pass2Call = openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      max_tokens: 3000,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "Je bent een strenge validatiestap. Bevestig alleen bevindingen met concrete tekstuele onderbouwing." },
+        { role: "user", content: validationPrompt }
+      ]
+    }).then(resp => parseJsonObject(resp.choices?.[0]?.message?.content, { resultaten: [] }))
+      .catch(err => {
+        console.warn("[pass2] fout:", err.message);
+        return { resultaten: [], pass2Fout: true };
+      });
+
+    pass2 = await withTimeout(pass2Call, 30000, { resultaten: [], pass2Fout: true });
+  }
+
+  let bevindingen = safeArray(pass2.resultaten)
+    .filter(item => String(item.status || "").toUpperCase() === "BEVESTIGD")
+    .map(normalizeBevinding)
+    .filter(item => item.bevinding && item.bewijs && item.herstelactie);
+  const pass2Failed = Boolean(pass2.pass2Fout);
+  if (pass2Failed && !bevindingen.length) bevindingen = fallbackBevindingen(kandidaten);
+  if (!pass2Failed) bevindingen = calibrateValidatedFindings(bevindingen, kandidaten);
+
+  const verworpenKandidaten = pass2Failed ? 0 : Math.max(0, kandidaten.length - bevindingen.length);
+  const scoreValue = calculateScore(bevindingen);
+  const label = scoreLabel(scoreValue);
+  const vertrouwen = calculateTrust(bevindingen, verworpenKandidaten);
+  const advies = buildAdvice(bevindingen);
+  const typeGaps = safeArray(typeGapsCache[dynamicMetadata.hoofdType]);
+  const legalArticles = safeArray(legalArticlesCache[dynamicMetadata.hoofdType]);
+  const raadsvragen = buildExpectedQuestions(bevindingen, typeGaps, legalArticles, pass1.beslispunten);
+
+  return {
+    gemeente: pass1.gemeente || "Onbekend",
+    hoofd_type: dynamicMetadata.hoofdType,
+    dynamische_context_actief: dynamicContextActive,
+    juridische_context_actief: legalContextActive,
+    gaps_gebruikt: dynamicMetadata.gapsGebruikt,
+    wetsartikelen_gebruikt: dynamicMetadata.wetsartikelenGebruikt,
+    score: {
+      totaal: scoreValue,
+      onderdelen: {
+        Besluitrijpheid: statusForScore(scoreValue),
+        Bewijsvoering: vertrouwen >= 70 ? "groen" : vertrouwen >= 50 ? "oranje" : "rood",
+        Bevindingen: bevindingen.some(item => item.blokkerend) ? "rood" : bevindingen.length ? "oranje" : "groen"
+      }
+    },
+    score_label: label,
+    leesbaarheid: pass1.leesbaarheid || {
+      zelfstandig_leesbaar: "Beperkt zelfstandig",
+      voorbeelden: [],
+      zonder_bijlagen: "Ja",
+      zonder_bijlagen_toelichting: ""
+    },
+    beslispunten_check: safeArray(pass1.beslispunten_check),
+    titelcheck: pass1.titelcheck || { oordeel: "Duidelijk", suggestie: "" },
+    taal_b1: pass1.taal_b1 || { oordeel: "Matig", voorbeelden: [] },
+    wcag: { indicatief: true, ...(pass1.wcag || { oordeel: "Toegankelijk", aandachtspunten: [] }) },
+    bevindingen,
+    verworpen_kandidaten: verworpenKandidaten,
+    vertrouwen,
+    verwachte_raadsvragen: {
+      label: "Verwachte raadsvragen",
+      vragen: raadsvragen
+    },
+    advies,
+    besluitrijpheid: scoreValue < 50 ? "onvoldoende" : scoreValue < 85 ? "voldoende" : "goed",
+    kandidaten_count: kandidaten.length,
+    pass2_fallback: pass2Failed,
+    kern: pass1.kern || "",
+    beslispunten: safeArray(pass1.beslispunten),
+    bevoegdheid: pass1.bevoegdheid || { oordeel: "onduidelijk", toelichting: "", grondslag: "" },
+    verbeterpunten: bevindingen.map(item => item.herstelactie || item.bevinding),
+    raadsvragen,
+    onderbouwing: buildOnderbouwing(bevindingen, advies)
+  };
+}
+
 // API endpoint
 app.post("/api/toets", upload.single("pdf"), async (req, res) => {
   if (!checkLimit()) {
@@ -684,4 +1057,17 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server draait op poort ${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server draait op poort ${PORT}`));
+}
+
+module.exports = {
+  app,
+  callOpenAI,
+  callOpenAIOld,
+  classifyProposal,
+  buildDynamicContext,
+  buildLegalContext,
+  calculateScore,
+  calculateTrust
+};

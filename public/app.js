@@ -136,6 +136,8 @@ function setStatus(state, msg) {
 }
 
 function renderResult(data) {
+  window.lastResult = data;
+
   // Beslispunten
   document.getElementById("beslispunten-list").innerHTML =
     (data.beslispunten || []).map(p => `<li>${escHtml(p)}</li>`).join("");
@@ -143,12 +145,22 @@ function renderResult(data) {
   // Kern
   document.getElementById("kern-text").textContent = data.kern || "";
 
-  // Verbeterpunten
-  document.getElementById("verbeter-list").innerHTML =
-    (data.verbeterpunten || []).map(p => `<li>${escHtml(p)}</li>`).join("");
+  renderTitelcheck(data.titelcheck);
+
+  // Bevestigde bevindingen
+  const bevindingen = data.bevindingen || [];
+  document.getElementById("verbeter-list").innerHTML = bevindingen.length
+    ? bevindingen.map(b => `
+      <li class="bevinding-item ${escClass(b.ernst)}">
+        <strong>${escHtml(b.ernst || "AANDACHT")} · ${escHtml(b.rubriek || "Algemeen")}</strong>
+        <span>${escHtml(b.bevinding || "")}</span>
+        ${b.bewijs ? `<small>Bewijs: ${escHtml(b.bewijs)}</small>` : ""}
+        ${b.herstelactie ? `<small>Herstel: ${escHtml(b.herstelactie)}</small>` : ""}
+      </li>`).join("")
+    : `<li class="bevinding-item geen">Geen bevestigde bevindingen.</li>`;
 
   // Raadsvragen
-  const vragen = data.raadsvragen || [];
+  const vragen = data.verwachte_raadsvragen?.vragen || data.raadsvragen || [];
   document.getElementById("vragen-list").innerHTML = vragen.length
     ? vragen.map(v => `<li>${escHtml(v)}</li>`).join("")
     : `<li class="vragen-leeg">Geen vragen gegenereerd voor dit type voorstel.</li>`;
@@ -186,6 +198,7 @@ function renderResult(data) {
     formatOnderbouwing(data.onderbouwing || "");
 
   renderScore(data.score);
+  renderQualityIndicators(data);
 
   statusIdle.classList.add("hidden");
   emptyState.classList.add("hidden");
@@ -199,20 +212,25 @@ function renderScore(score) {
   const ring = document.getElementById("score-ring");
   const numEl = document.getElementById("score-number");
   const labelEl = document.getElementById("score-label");
+  const trustEl = document.getElementById("trust-label");
   const catsEl = document.getElementById("score-cats");
 
   const totaal = score.totaal || 0;
   const circumference = 213.6;
   const offset = circumference - (totaal / 100) * circumference;
 
-  // Kleur op basis van score
-  const kleur = totaal >= 70 ? "#22c55e" : totaal >= 50 ? "#f59e0b" : "#ef4444";
-  const label = totaal >= 70 ? "Voldoende kwaliteit" : totaal >= 50 ? "Verbetering nodig" : "Niet besluitrijp";
+  // Kleur op basis van gecalibreerde scorebanden
+  const kleur = totaal >= 85 ? "#22c55e" : totaal >= 65 ? "#eab308" : totaal >= 50 ? "#f59e0b" : "#ef4444";
+  const label = window.lastResult?.score_label || (totaal >= 85 ? "Besluitrijp" : totaal >= 65 ? "Lichte verbeterpunten" : totaal >= 50 ? "Verbeterd voor behandeling" : "Niet besluitrijp");
 
   ring.style.strokeDashoffset = offset;
   ring.style.stroke = kleur;
   numEl.textContent = totaal;
   labelEl.textContent = label;
+  if (trustEl) {
+    const vertrouwen = window.lastResult?.vertrouwen;
+    trustEl.textContent = Number.isFinite(vertrouwen) ? `Analysebetrouwbaarheid: ${vertrouwen}%` : "";
+  }
 
   // Categorieën
   catsEl.innerHTML = Object.entries(score.onderdelen || {})
@@ -255,6 +273,36 @@ function formatOnderbouwing(tekst) {
   return parts.join("") || `<p>${escHtml(tekst)}</p>`;
 }
 
+function renderTitelcheck(titelcheck) {
+  const el = document.getElementById("titelcheck-line");
+  if (!el) return;
+  if (!titelcheck || !titelcheck.oordeel) {
+    el.classList.add("hidden");
+    el.textContent = "";
+    return;
+  }
+  const suggestie = titelcheck.suggestie ? ` · Suggestie: ${titelcheck.suggestie}` : "";
+  el.textContent = `Titel: ${titelcheck.oordeel}${suggestie}`;
+  el.className = `titelcheck-line ${badgeClass(titelcheck.oordeel, ["Duidelijk"], ["Matig"])}`;
+}
+
+function renderQualityIndicators(data) {
+  window.lastResult = data;
+  const el = document.getElementById("quality-badges");
+  if (!el) return;
+  const badges = [];
+  if (data.taal_b1?.oordeel) badges.push({ label: "Taal B1", value: `${data.taal_b1.oordeel} · indicatief`, cls: badgeClass(data.taal_b1.oordeel, ["B1-conform"], ["Matig"]) });
+  if (data.wcag?.oordeel) badges.push({ label: "WCAG", value: `${data.wcag.oordeel} · indicatief`, cls: badgeClass(data.wcag.oordeel, ["Toegankelijk"], ["Aandachtspunten"]) });
+  if (data.juridische_context_actief) badges.push({ label: "Juridisch", value: "referentie actief", cls: "neutral" });
+  el.innerHTML = badges.map(b => `<div class="quality-badge ${b.cls}"><span>${escHtml(b.label)}</span>${escHtml(b.value)}</div>`).join("");
+}
+
+function badgeClass(value, greenValues, amberValues) {
+  if (greenValues.includes(value)) return "green";
+  if (amberValues.includes(value)) return "amber";
+  return "red";
+}
+
 function resetResultScrollPositions() {
   [
     "#beslispunten-list",
@@ -273,4 +321,8 @@ function escHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/\n/g, "<br>");
+}
+
+function escClass(str) {
+  return String(str || "").toLowerCase().replace(/[^a-z0-9_-]/g, "-");
 }

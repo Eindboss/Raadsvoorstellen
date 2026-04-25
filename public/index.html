@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Raadsvoorstel Kwaliteitstoets</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -94,11 +96,13 @@
           <div class="score-number" id="score-number">--</div>
         </div>
         <div class="score-label" id="score-label">Beoordeeld</div>
+        <div class="trust-label" id="trust-label"></div>
+        <div class="quality-badges" id="quality-badges"></div>
         <div class="score-cats" id="score-cats"></div>
       </div>
 
       <div class="left-footer">
-        Beoordeelt uitsluitend formele kwaliteit&mdash;niet de politieke inhoud.
+        Beoordeelt formele kwaliteit en besluitrijpheid. Inhoud alleen waar die uitvoerbaarheid, juridische juistheid of interne consistentie raakt.
       </div>
     </aside>
 
@@ -134,6 +138,7 @@
           <div class="kern-summary">
             <div class="card-label">Kern van het voorstel</div>
             <p id="kern-text"></p>
+            <div id="titelcheck-line" class="titelcheck-line hidden"></div>
           </div>
           <div class="kern-beslispunten">
             <div class="card-label">Beslispunten</div>

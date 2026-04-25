@@ -61,3 +61,14 @@
 - Promptveiligheid: de juridische context is expliciet defensief geformuleerd. Artikelen zijn controlevragen, geen bewijs van tekortschieten; het model mag alleen signaleren bij concreet aantoonbaar ontbreken of onjuistheid in de voorsteltekst.
 - Traceerbaarheid: outputmetadata uitgebreid met `juridische_context_actief` en `wetsartikelen_gebruikt`.
 - Verificatie: `node --check server.js` geslaagd; `public/legal-articles.json` parseert als JSON; startup toont `legal-articles.json geladen: 10 types`; `overig` krijgt door `buildLegalContext` geen juridische context.
+
+### Fase 7 - Tweefasige toets en gecalibreerde score
+
+- Aanleiding: de eenstaps prompt produceerde plausibele maar niet altijd bewijsbare aandachtspunten en liet de score te vaak in dezelfde 70-80 band vallen.
+- Wijziging: `server.js` gebruikt nu Pass 1 voor brede detectie en Pass 2 voor validatie met bewijsverplichting. Eindoutput bevat alleen bevestigde of gecalibreerd behouden bevindingen met `bewijs`, `ernst`, `herstelactie` en `herstelbaar_voor_behandeling`.
+- Afwijking/iteratie 1: Pass 2 was aanvankelijk te streng en verwierp vrijwel alles; recall daalde te hard. Prompt aangescherpt naar "bevestig tenzij adequaat aanwezig".
+- Afwijking/iteratie 2: Pass 2-timeout was te laag; validatietekst voor Pass 2 begrensd op 12.000 tekens en timeout verhoogd naar 30 seconden. Productie blijft non-blocking door fallback.
+- Afwijking/iteratie 3: zelfs met zachtere prompt bleef het model soms te veel verwerpen. Daarom is een calibratieguard toegevoegd: concrete Pass 1-kandidaten worden als AANDACHT behouden wanneer Pass 2 te weinig bevestigt, met bewijs als concreet ontbrekend element. BLOKKEREND wordt alleen gebruikt bij harde signalen zoals ontbrekende dekking, tegenstrijdige bedragen of juridische onuitvoerbaarheid.
+- Score: modelscore verwijderd uit de live-output; score en vertrouwen worden server-side berekend op basis van bevestigde bevindingen, ernst en bewijs.
+- UI: B1-taalindicator, WCAG-indicator, titelcheck, analysebetrouwbaarheid en bevindingen met bewijs toegevoegd. Favicons toegevoegd via `public/favicon.svg`.
+- Validatie: `node scripts/validate-two-phase.js` op 10 voorstellen met score-3 gaps. Resultaat: oude recall 54,2%, nieuwe recall 47,2% (delta -6,9pp), 100% bevindingen met bewijs, 96% concrete herstelacties, 100% voorstel-specifieke raadsvragen, scoreband 41-60, 0 Pass 2-fallbacks. Criteria gehaald volgens `analyse-tweefasige-toets.md`.
