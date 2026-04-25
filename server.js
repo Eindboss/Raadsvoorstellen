@@ -286,7 +286,22 @@ Beoordeel dit alleen bij voorstellen met substantiele financiele, juridische
 of maatschappelijke impact. Sla deze rubriek over bij eenvoudige benoemingen,
 kennisname-voorstellen en zienswijzen.
 
-10. Juridische kwaliteit
+10. Participatie
+
+Controleer of het voorstel inzicht geeft in het participatieproces.
+
+Signaleer als:
+het voorstel vermeldt dat er participatie heeft plaatsgevonden maar niet
+beschrijft welke stakeholders of groepen zijn betrokken,
+niet duidelijk is via welk proces of welke vorm van participatie is geconsulteerd,
+of niet is beschreven of en hoe de inbreng het voorstel heeft beinvloed.
+
+Beoordeel dit alleen bij voorstellen waarbij participatie verwacht mag worden,
+zoals bij ruimtelijke plannen, beleidswijzigingen met maatschappelijke impact
+of voorstellen waarbij bewoners of organisaties expliciet worden genoemd.
+Sla over bij benoemingen, technische kredietaanvragen en zienswijzen.
+
+11. Juridische kwaliteit
 
 Controleer:
 consistente terminologie,
@@ -296,11 +311,11 @@ en correcte interne verwijzingen.
 
 Controleer niet standaard of in het raadsbesluit onder Gelet op een wettelijke grondslag is opgenomen.
 
-11. Proces en planning
+12. Proces en planning
 
 Voer een lichte check uit op logische agendering en evidente procedurele fouten.
 
-12. Naamgeving
+13. Naamgeving
 
 Controleer of de titel duidelijk is, niet onnodig lang is, geen afkortingen bevat en aansluit bij de inhoud.
 
@@ -314,6 +329,7 @@ Beoordeel uitsluitend het raadsvoorstel en de raadsbeslispunten, niet het colleg
 Een zienswijzebrief die als concept in .docx is bijgevoegd, is gebruikelijk en correct.
 Toets uitvoering alleen als het voorstel een nieuw beleid, krediet, project of maatregel betreft. Sla uitvoering over bij benoemingen, zienswijzen en kennisname.
 Toets risico alleen bij voorstellen met substantiele financiele, juridische of maatschappelijke impact. Sla over bij benoemingen, kennisname en zienswijzen.
+Toets participatie alleen bij voorstellen waarbij participatie verwacht mag worden op basis van het type voorstel. Sla over bij benoemingen, technische kredieten en zienswijzen.
 
 Gedragsregels
 
