@@ -213,7 +213,6 @@ function renderResult(data) {
   statusIdle.classList.add("hidden");
   emptyState.classList.add("hidden");
   resultGrid.classList.remove("hidden");
-  document.querySelector(".card-right")?.scrollTo({ top: 0 });
   document.querySelector(".rapport-scroll")?.scrollTo({ top: 0 });
 }
 
