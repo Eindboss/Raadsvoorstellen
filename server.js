@@ -34,6 +34,12 @@ try {
   console.warn("[startup] type-gaps.json niet gevonden, dynamische context uitgeschakeld");
 }
 
+const DYNAMIC_GAP_LIMIT_BY_TYPE = {
+  "beleid-kaderstelling": 4,
+  "financien-penc": 4,
+  "ruimte-grond-vastgoed": 4
+};
+
 const app = express();
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -432,11 +438,15 @@ ${snippet}`;
   return withTimeout(classifyCall, 8000, "overig");
 }
 
-function buildDynamicContext(hoofdType) {
+function getDynamicGapLimit(hoofdType) {
+  return DYNAMIC_GAP_LIMIT_BY_TYPE[hoofdType] || 3;
+}
+
+function buildDynamicContext(hoofdType, limit = 3) {
   const gaps = typeGapsCache[hoofdType];
   if (hoofdType === "overig" || !Array.isArray(gaps) || gaps.length === 0) return "";
 
-  const lines = gaps.slice(0, 3).map(g =>
+  const lines = gaps.slice(0, limit).map(g =>
     `- ${g.informatie_type}: ${g.check} (speelde bij ${g.n_voorstellen} vergelijkbare voorstellen)`
   ).join("\n");
 
@@ -597,9 +607,10 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
     }
 
     const hoofdType = await classifyProposal(text);
-    const dynamicContext = buildDynamicContext(hoofdType);
+    const gapLimit = getDynamicGapLimit(hoofdType);
+    const dynamicContext = buildDynamicContext(hoofdType, gapLimit);
     const gapsGebruikt = Array.isArray(typeGapsCache[hoofdType])
-      ? typeGapsCache[hoofdType].slice(0, 3).map(g => g.informatie_type)
+      ? typeGapsCache[hoofdType].slice(0, gapLimit).map(g => g.informatie_type)
       : [];
 
     console.log(`[toets] hoofd_type=${hoofdType} gaps=${typeGapsCache[hoofdType]?.length ?? 0} dynamic=${dynamicContext.length > 0}`);

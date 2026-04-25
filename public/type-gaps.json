@@ -14,6 +14,11 @@
       "informatie_type": "financieel",
       "n_voorstellen": 21,
       "check": "Zijn de financiele gevolgen, dekking, onderbouwing van ramingen en gevolgen bij tegenvallers concreet beschreven?"
+    },
+    {
+      "informatie_type": "planning",
+      "n_voorstellen": 15,
+      "check": "Bevat het voorstel een realistisch tijdspad met start, mijlpalen, besluitmomenten en verwachte oplevering?"
     }
   ],
   "financien-penc": [
@@ -31,6 +36,11 @@
       "informatie_type": "risico",
       "n_voorstellen": 49,
       "check": "Bevat het voorstel concrete risicos, gevolgen en mitigerende maatregelen die relevant zijn voor besluitvorming?"
+    },
+    {
+      "informatie_type": "participatie",
+      "n_voorstellen": 30,
+      "check": "Beschrijft het voorstel wie is betrokken, hoe participatie is uitgevoerd en wat met de inbreng is gedaan?"
     }
   ],
   "regelgeving": [
@@ -55,6 +65,11 @@
       "informatie_type": "uitvoering",
       "n_voorstellen": 27,
       "check": "Beschrijft het voorstel wie verantwoordelijk is voor uitvoering, welke stappen volgen en hoe voortgang wordt bewaakt?"
+    },
+    {
+      "informatie_type": "participatie",
+      "n_voorstellen": 14,
+      "check": "Beschrijft het voorstel wie is betrokken, hoe participatie is uitgevoerd en wat met de inbreng is gedaan?"
     },
     {
       "informatie_type": "risico",

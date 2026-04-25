@@ -38,3 +38,15 @@
 - Tweede run: recall statisch 39,0%, dynamisch 53,9%, delta +14,9 procentpunt; precisie dynamisch 55,3%.
 - Conclusie: de proxy toont duidelijke richtingverbetering maar haalt de formele drempels niet. De precisiedrempel van 70% is met deze informatie_type-proxy niet realistisch, omdat hij type-overlap meet in plaats van concrete herstelbare aandachtspunten uit de volledige serverprompt.
 - Beslissing: productieprompt blijft conservatief; geen verdere versmalling van `type-gaps.json` omdat de matrix inhoudelijk plausibel is en de proxy daarvoor te grof is.
+
+### Fase 5b - Regressiefix participatie
+
+- Aanleiding: in de echte toets-outputreview verdween `participatie` bij beleid-/ruimtecasussen zodra de dynamische context slechts 3 gaps injecteerde. De top-3 werd dan gevuld door financieel, uitvoering en risico.
+- Controle `type-gaps.json`: `participatie` stond al bij `beleid-kaderstelling` met `n_voorstellen = 33`; geen drempelverlaging nodig. In de onderliggende matrix hebben `beleid-kaderstelling`, `financien-penc` en `ruimte-grond-vastgoed` meer dan 3 sterke gaps. Voor `ruimte-grond-vastgoed` is `participatie` met `n_voorstellen = 14` als gerichte uitzondering meegenomen, omdat de regressievoorstellen in dit type vielen.
+- Wijziging: `buildDynamicContext(hoofdType, limit = 3)` ondersteunt nu een limietparameter. Productie gebruikt 4 gaps voor `beleid-kaderstelling`, `financien-penc` en `ruimte-grond-vastgoed`; overige types blijven op 3.
+- Wijziging: `type-gaps.json` bevat nu 4 gaps voor de drie genoemde types. Bij `ruimte-grond-vastgoed` staat `participatie` direct na `uitvoering`, zodat deze check niet als laatste signaal ondersneeuwt.
+- Verificatie: `node scripts/generate-review-document.js --ids=8463,483,137` opnieuw gedraaid vanuit `C:\dev\Toolbox`. In `review-dynamische-rubric-8463-483-137.md` komt `participatie` terug in de dynamische output voor alle drie regressievoorstellen:
+  - id 8463: dynamisch treft `participatie, uitvoering, financieel, risico`
+  - id 483: dynamisch treft `uitvoering, participatie, financieel, risico`
+  - id 137: dynamisch treft `participatie, financieel`
+- Syntaxcontrole: `node --check server.js` geslaagd. Toolbox-reviewscript syntaxcontrole geslaagd, maar Toolbox wordt niet gecommit.
