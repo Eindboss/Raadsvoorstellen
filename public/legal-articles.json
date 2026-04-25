@@ -1,0 +1,172 @@
+{
+  "personeel-organisatie": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "107",
+      "omschrijving": "Raad wijst de griffier aan en besluit over diens arbeidsovereenkomst"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "107e",
+      "omschrijving": "Raad stelt regels over de griffie en besluit over griffiemedewerkers"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "160",
+      "omschrijving": "College voert dagelijks bestuur en beslist over ambtelijke organisatie buiten de griffie"
+    }
+  ],
+  "zienswijze-verbonden-partijen": [
+    {
+      "wet": "Wet gemeenschappelijke regelingen",
+      "artikel": "1",
+      "omschrijving": "Gemeenschappelijke regeling kan alleen worden getroffen door bevoegde bestuursorganen"
+    },
+    {
+      "wet": "Wet gemeenschappelijke regelingen",
+      "artikel": "34b",
+      "omschrijving": "Kaders en voorlopige jaarrekening worden tijdig aan deelnemende raden gezonden"
+    },
+    {
+      "wet": "Wet gemeenschappelijke regelingen",
+      "artikel": "35",
+      "omschrijving": "Ontwerpbegroting wordt aan raden gezonden zodat zij een zienswijze kunnen geven"
+    }
+  ],
+  "regelgeving": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "147",
+      "omschrijving": "Raad stelt gemeentelijke verordeningen vast tenzij de wet anders bepaalt"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "149",
+      "omschrijving": "Raad maakt verordeningen die hij in het belang van de gemeente nodig oordeelt"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "156",
+      "omschrijving": "Sommige raadsbevoegdheden, zoals strafbepalingen en financiele verordeningen, zijn niet overdraagbaar"
+    }
+  ],
+  "financien-penc": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "189",
+      "omschrijving": "Raad autoriseert bedragen op de begroting en bewaakt structureel en reeel evenwicht"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "191",
+      "omschrijving": "Raad stelt de begroting vast in het jaar voorafgaand aan het begrotingsjaar"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "212",
+      "omschrijving": "Raad stelt de financiele verordening vast voor beleid, beheer en organisatie"
+    }
+  ],
+  "ruimte-grond-vastgoed": [
+    {
+      "wet": "Omgevingswet",
+      "artikel": "2.4",
+      "omschrijving": "Gemeenteraad stelt het omgevingsplan vast voor regels over de fysieke leefomgeving"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "160",
+      "omschrijving": "College besluit over privaatrechtelijke rechtshandelingen van de gemeente"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "169",
+      "omschrijving": "College geeft raad vooraf inlichtingen bij ingrijpende uitoefening van bepaalde collegebevoegdheden"
+    }
+  ],
+  "beleid-kaderstelling": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "108",
+      "omschrijving": "Gemeentebestuur regelt en bestuurt de huishouding van de gemeente binnen wettelijke grenzen"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "147",
+      "omschrijving": "Raadsbevoegdheden berusten bij de raad tenzij de wet ze aan college of burgemeester toekent"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "169",
+      "omschrijving": "College is verantwoording schuldig aan de raad en verstrekt gevraagde inlichtingen"
+    }
+  ],
+  "controle-moties-toezeggingen": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "155",
+      "omschrijving": "Raadslid kan mondeling of schriftelijk vragen stellen aan college of burgemeester"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "169",
+      "omschrijving": "College is verantwoording schuldig aan de raad en verstrekt gevraagde inlichtingen"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "180",
+      "omschrijving": "Burgemeester is verantwoording schuldig aan de raad en verstrekt gevraagde inlichtingen"
+    }
+  ],
+  "bedrijfsvoering-informatie": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "160",
+      "omschrijving": "College voert dagelijks bestuur en stelt regels over de ambtelijke organisatie buiten de griffie"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "169",
+      "omschrijving": "College informeert de raad vooraf bij ingrijpende besluiten op bepaalde collegebevoegdheden"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "212",
+      "omschrijving": "Raad stelt regels voor financieel beleid, beheer en organisatie"
+    }
+  ],
+  "sociaal-domein-subsidies": [
+    {
+      "wet": "Wet maatschappelijke ondersteuning 2015",
+      "artikel": "2.1.2",
+      "omschrijving": "Gemeenteraad stelt periodiek een Wmo-beleidsplan vast met hoofdzaken van het beleid"
+    },
+    {
+      "wet": "Jeugdwet",
+      "artikel": "2.2",
+      "omschrijving": "Gemeenteraad stelt periodiek het beleidsplan voor preventie, jeugdhulp en jeugdreclassering vast"
+    },
+    {
+      "wet": "Algemene wet bestuursrecht",
+      "artikel": "4:23",
+      "omschrijving": "Subsidie vereist een wettelijke grondslag, tenzij een wettelijke uitzondering geldt"
+    }
+  ],
+  "veiligheid-bestuur": [
+    {
+      "wet": "Gemeentewet",
+      "artikel": "149",
+      "omschrijving": "Raad kan lokale verordeningen vaststellen, waaronder openbare-orderegels binnen wettelijke grenzen"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "172",
+      "omschrijving": "Burgemeester is belast met handhaving van de openbare orde"
+    },
+    {
+      "wet": "Gemeentewet",
+      "artikel": "174",
+      "omschrijving": "Burgemeester houdt toezicht op openbare samenkomsten, vermakelijkheden en voor publiek openstaande gebouwen"
+    }
+  ]
+}

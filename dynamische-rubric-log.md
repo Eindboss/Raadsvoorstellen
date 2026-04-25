@@ -50,3 +50,14 @@
   - id 483: dynamisch treft `uitvoering, participatie, financieel, risico`
   - id 137: dynamisch treft `participatie, financieel`
 - Syntaxcontrole: `node --check server.js` geslaagd. Toolbox-reviewscript syntaxcontrole geslaagd, maar Toolbox wordt niet gecommit.
+
+### Fase 6 - Juridische referentiecontrole
+
+- Aanleiding: naast historische vraagpatronen is een compacte juridische referentiecontrole toegevoegd per voorsteltype.
+- Correctie op opdracht: de genoemde Wgr-link `BWBR0003984` verwijst naar een vervallen regeling over kandidatenlijsten. Gebruikte bron voor Wgr is `BWBR0003740`.
+- Beslissing: bestand heet `public/legal-articles.json` in plaats van `gemeentewet-articles.json`, omdat de mapping naast Gemeentewet ook Wgr, Omgevingswet, Wmo 2015, Jeugdwet en Awb bevat.
+- Selectieprincipe: maximaal 3 artikelen per hoofd_type, alleen concreet toetsbare bepalingen over bevoegdheid, procedure, begroting, verordening, subsidiegrondslag of raadscontrole. `overig` heeft geen entry.
+- Wijziging: `server.js` laadt `legal-articles.json`, bouwt `buildLegalContext(hoofdType)` en injecteert deze context direct na de dynamische vraagpatronen en voor `Gedragsregels`.
+- Promptveiligheid: de juridische context is expliciet defensief geformuleerd. Artikelen zijn controlevragen, geen bewijs van tekortschieten; het model mag alleen signaleren bij concreet aantoonbaar ontbreken of onjuistheid in de voorsteltekst.
+- Traceerbaarheid: outputmetadata uitgebreid met `juridische_context_actief` en `wetsartikelen_gebruikt`.
+- Verificatie: `node --check server.js` geslaagd; `public/legal-articles.json` parseert als JSON; startup toont `legal-articles.json geladen: 10 types`; `overig` krijgt door `buildLegalContext` geen juridische context.

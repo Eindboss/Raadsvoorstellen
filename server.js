@@ -34,6 +34,15 @@ try {
   console.warn("[startup] type-gaps.json niet gevonden, dynamische context uitgeschakeld");
 }
 
+const LEGAL_ARTICLES_PATH = path.join(__dirname, "public", "legal-articles.json");
+let legalArticlesCache = {};
+try {
+  legalArticlesCache = JSON.parse(fs.readFileSync(LEGAL_ARTICLES_PATH, "utf8"));
+  console.log(`[startup] legal-articles.json geladen: ${Object.keys(legalArticlesCache).length} types`);
+} catch (e) {
+  console.warn("[startup] legal-articles.json niet gevonden, juridische context uitgeschakeld");
+}
+
 const DYNAMIC_GAP_LIMIT_BY_TYPE = {
   "beleid-kaderstelling": 4,
   "financien-penc": 4,
@@ -459,17 +468,51 @@ ${lines}
 `;
 }
 
-function buildSystemPrompt(dynamicContext) {
-  if (!dynamicContext) return SYSTEM_PROMPT;
-  return SYSTEM_PROMPT.replace("\nGedragsregels", `${dynamicContext}\nGedragsregels`);
+function buildLegalContext(hoofdType) {
+  const articles = legalArticlesCache[hoofdType];
+  if (hoofdType === "overig" || !Array.isArray(articles) || articles.length === 0) return "";
+
+  const lines = articles.map(a =>
+    `- ${a.wet} art. ${a.artikel}: ${a.omschrijving}`
+  ).join("\n");
+
+  return `\nJuridische referentiecontrole voor dit voorsteltype (${hoofdType}):
+Gebruik deze artikelen alleen als controlevragen voor bevoegdheid, procedure of wettelijke grondslag. Dit is geen volledige juridische analyse en geen bewijs dat het huidige voorstel tekortschiet.
+Signaleer alleen als een grondslag, bevoegdheid of procedurestap concreet aantoonbaar ontbreekt of onjuist lijkt in de aangeleverde voorsteltekst.
+Niet elk voorstel hoeft letterlijk een wetsartikel te noemen. Als de bevoegdheid of procedure voldoende uit de context blijkt, formuleer dan geen aandachtspunt.
+
+${lines}
+`;
 }
 
-async function callOpenAI(text, dynamicMetadata = { hoofdType: "overig", dynamicContext: "", gapsGebruikt: [] }) {
+function buildSystemPrompt(injectedContext) {
+  if (!injectedContext) return SYSTEM_PROMPT;
+  return SYSTEM_PROMPT.replace("\nGedragsregels", `${injectedContext}\nGedragsregels`);
+}
+
+async function callOpenAI(text, dynamicMetadata = {
+  hoofdType: "overig",
+  dynamicContext: "",
+  legalContext: "",
+  gapsGebruikt: [],
+  wetsartikelenGebruikt: []
+}) {
+  dynamicMetadata = {
+    hoofdType: "overig",
+    dynamicContext: "",
+    legalContext: "",
+    gapsGebruikt: [],
+    wetsartikelenGebruikt: [],
+    ...dynamicMetadata
+  };
+
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
   if (!openai) throw new Error("OPENAI_API_KEY niet geconfigureerd.");
 
   const truncated = text.slice(0, 60000);
   const dynamicContextActive = Boolean(dynamicMetadata.dynamicContext);
+  const legalContextActive = Boolean(dynamicMetadata.legalContext);
+  const injectedContext = `${dynamicMetadata.dynamicContext || ""}${dynamicMetadata.legalContext || ""}`;
 
   const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
 Stap 1: classificeer het voorstel volledig (hoofdType, subType, complexiteit, toetsprofiel).
@@ -483,6 +526,8 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
   "hoofd_type": "${dynamicMetadata.hoofdType}",
   "dynamische_context_actief": ${dynamicContextActive},
   "gaps_gebruikt": ${JSON.stringify(dynamicMetadata.gapsGebruikt)},
+  "juridische_context_actief": ${legalContextActive},
+  "wetsartikelen_gebruikt": ${JSON.stringify(dynamicMetadata.wetsartikelenGebruikt)},
   "classificatie": {
     "hoofdType": "personeel-organisatie | zienswijze-verbonden-partijen | regelgeving | financien-penc | ruimte-grond-vastgoed | beleid-kaderstelling | controle-moties-toezeggingen | bedrijfsvoering-informatie | sociaal-domein-subsidies | veiligheid-bestuur | overig",
     "subType": "specifiek subtype in gewone taal, bijv. 'kredietaanvraag renovatie gemeentelijk vastgoed'",
@@ -530,6 +575,8 @@ Regels:
 - hoofd_type: neem exact de vooraf bepaalde hoofd_type metadata over: "${dynamicMetadata.hoofdType}"
 - dynamische_context_actief: neem exact de metadatawaarde over: ${dynamicContextActive}
 - gaps_gebruikt: neem exact deze lijst over: ${JSON.stringify(dynamicMetadata.gapsGebruikt)}
+- juridische_context_actief: neem exact de metadatawaarde over: ${legalContextActive}
+- wetsartikelen_gebruikt: neem exact deze lijst over: ${JSON.stringify(dynamicMetadata.wetsartikelenGebruikt)}
 - classificatie.hoofdType: kies precies een van de genoemde waarden
 - classificatie.subType: omschrijf het specifieke subtype in gewone taal (geen code, geen enum)
 - classificatie.complexiteit: "laag" voor eenvoudige benoemingen of zienswijzen, "hoog" voor complexe financiele of juridische voorstellen
@@ -555,7 +602,7 @@ ${truncated}`;
     max_tokens: 3000,
     response_format: { type: "json_object" },
     messages: [
-      { role: "system", content: buildSystemPrompt(dynamicMetadata.dynamicContext) },
+      { role: "system", content: buildSystemPrompt(injectedContext) },
       { role: "user", content: userPrompt }
     ]
   });
@@ -566,12 +613,16 @@ ${truncated}`;
     parsed.hoofd_type = dynamicMetadata.hoofdType;
     parsed.dynamische_context_actief = dynamicContextActive;
     parsed.gaps_gebruikt = dynamicMetadata.gapsGebruikt;
+    parsed.juridische_context_actief = legalContextActive;
+    parsed.wetsartikelen_gebruikt = dynamicMetadata.wetsartikelenGebruikt;
     return parsed;
   } catch (e) {
     return {
       hoofd_type: dynamicMetadata.hoofdType,
       dynamische_context_actief: dynamicContextActive,
       gaps_gebruikt: dynamicMetadata.gapsGebruikt,
+      juridische_context_actief: legalContextActive,
+      wetsartikelen_gebruikt: dynamicMetadata.wetsartikelenGebruikt,
       onderbouwing: content,
       beslispunten: [],
       kern: "",
@@ -609,16 +660,22 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
     const hoofdType = await classifyProposal(text);
     const gapLimit = getDynamicGapLimit(hoofdType);
     const dynamicContext = buildDynamicContext(hoofdType, gapLimit);
+    const legalContext = buildLegalContext(hoofdType);
     const gapsGebruikt = Array.isArray(typeGapsCache[hoofdType])
       ? typeGapsCache[hoofdType].slice(0, gapLimit).map(g => g.informatie_type)
       : [];
+    const wetsartikelenGebruikt = Array.isArray(legalArticlesCache[hoofdType])
+      ? legalArticlesCache[hoofdType].map(a => `${a.wet} art. ${a.artikel}`)
+      : [];
 
-    console.log(`[toets] hoofd_type=${hoofdType} gaps=${typeGapsCache[hoofdType]?.length ?? 0} dynamic=${dynamicContext.length > 0}`);
+    console.log(`[toets] hoofd_type=${hoofdType} gaps=${typeGapsCache[hoofdType]?.length ?? 0} dynamic=${dynamicContext.length > 0} legal=${legalContext.length > 0}`);
 
     const result = await callOpenAI(text, {
       hoofdType,
       dynamicContext,
-      gapsGebruikt: dynamicContext ? gapsGebruikt : []
+      legalContext,
+      gapsGebruikt: dynamicContext ? gapsGebruikt : [],
+      wetsartikelenGebruikt: legalContext ? wetsartikelenGebruikt : []
     });
     res.json(result);
   } catch (err) {
