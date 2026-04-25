@@ -237,7 +237,15 @@ Controleer of de dekking concreet en herleidbaar is.
 
 Signaleer als:
 er financiele gevolgen zijn zonder dat dit uit het voorstel blijkt,
-of dekking ontbreekt of onduidelijk is.
+dekking ontbreekt of onduidelijk is,
+een raming niet is onderbouwd (geen verwijzing naar aanbesteding, offerte,
+historische vergelijking of andere berekeningsbasis),
+of niet is beschreven wat er gebeurt bij budgetoverschrijding of financiele
+tegenvaller.
+
+Weeg de onderbouwing van ramingen zwaarder bij kredieten, grondexploitaties
+en meerjarige projecten. Bij eenvoudige benoemingen en kennisname-voorstellen
+volstaat een globale check.
 
 6. Rolzuiverheid
 
