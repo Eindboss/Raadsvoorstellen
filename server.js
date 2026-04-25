@@ -253,7 +253,18 @@ informatie ontbreekt,
 nadere uitwerking noodzakelijk is,
 of het besluit niet uitvoerbaar is zoals geformuleerd.
 
-8. Juridische kwaliteit
+8. Uitvoering
+
+Controleer of het voorstel beschrijft hoe het besluit in de praktijk wordt uitgevoerd.
+
+Signaleer als:
+niet duidelijk is welke partij of afdeling verantwoordelijk is voor de uitvoering,
+de concrete stappen of het uitvoeringsproces ontbreken,
+of niet is beschreven hoe de voortgang wordt bewaakt of gerapporteerd aan de raad.
+
+Weeg dit minder zwaar bij benoemingen, zienswijzen en kennisname-voorstellen.
+
+9. Juridische kwaliteit
 
 Controleer:
 consistente terminologie,
@@ -263,11 +274,11 @@ en correcte interne verwijzingen.
 
 Controleer niet standaard of in het raadsbesluit onder Gelet op een wettelijke grondslag is opgenomen.
 
-9. Proces en planning
+10. Proces en planning
 
 Voer een lichte check uit op logische agendering en evidente procedurele fouten.
 
-10. Naamgeving
+11. Naamgeving
 
 Controleer of de titel duidelijk is, niet onnodig lang is, geen afkortingen bevat en aansluit bij de inhoud.
 
@@ -279,6 +290,7 @@ Maak geen opmerking over het ontbreken van een wettelijke grondslag in Gelet op 
 Bij een zienswijzeraadsvoorstel controleer je wel of in het raadsvoorstel een juridische grondslag is benoemd waaruit blijkt dat de raad bevoegd is om een zienswijze in te dienen.
 Beoordeel uitsluitend het raadsvoorstel en de raadsbeslispunten, niet het collegevoorstel.
 Een zienswijzebrief die als concept in .docx is bijgevoegd, is gebruikelijk en correct.
+Toets uitvoering alleen als het voorstel een nieuw beleid, krediet, project of maatregel betreft. Sla uitvoering over bij benoemingen, zienswijzen en kennisname.
 
 Gedragsregels
 
