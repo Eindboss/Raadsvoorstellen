@@ -397,6 +397,7 @@ input[type="url"]:focus-visible {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 /* ── Empty state ─────────────────────────────────────────── */
@@ -456,12 +457,13 @@ input[type="url"]:focus-visible {
 .result-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 310px;
-  grid-template-rows: auto 1fr;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0.75rem;
   overflow: hidden;
   height: 100%;
   min-width: 0;
+  min-height: 0;
 }
 
 /* Kern: volle breedte banner */
@@ -470,6 +472,7 @@ input[type="url"]:focus-visible {
   grid-row: 1;
   background: var(--sand);
   border-color: var(--border-light);
+  min-height: 0;
 }
 
 /* Rapport: hoofdkaart links */
@@ -477,6 +480,7 @@ input[type="url"]:focus-visible {
   grid-column: 1;
   grid-row: 2;
   border-left: 3px solid var(--accent);
+  min-height: 0;
 }
 
 /* Rechterkolom: zelf scrollt, kaarten groeien mee met inhoud */
@@ -489,6 +493,7 @@ input[type="url"]:focus-visible {
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
+  min-height: 0;
 }
 
 /* Kaarten in rechterkolom: geen vaste hoogte, geen interne scroll */
@@ -515,6 +520,7 @@ input[type="url"]:focus-visible {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .card-label {
@@ -544,8 +550,9 @@ input[type="url"]:focus-visible {
 /* ── Card content ────────────────────────────────────────── */
 .dash-card ol,
 .dash-card ul {
-  overflow-y: auto;
-  flex: 1;
+  overflow: visible;
+  flex: none;
+  min-height: 0;
 }
 
 .dash-card ol {
@@ -635,6 +642,7 @@ input[type="url"]:focus-visible {
 .rapport-scroll {
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
   font-size: 0.9rem;
   line-height: 1.75;
 }
@@ -658,7 +666,7 @@ input[type="url"]:focus-visible {
   :root { --panel-w: 240px; }
 
   .result-grid {
-    grid-template-columns: 1fr 270px;
+    grid-template-columns: minmax(0, 1fr) 270px;
   }
 
   .card-kern p { font-size: 0.9rem; }
@@ -668,7 +676,7 @@ input[type="url"]:focus-visible {
   :root { --panel-w: 220px; }
 
   .result-grid {
-    grid-template-columns: 1fr 240px;
+    grid-template-columns: minmax(0, 1fr) 240px;
     gap: 0.6rem;
   }
 
