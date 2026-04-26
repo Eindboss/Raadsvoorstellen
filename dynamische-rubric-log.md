@@ -72,3 +72,14 @@
 - Score: modelscore verwijderd uit de live-output; score en vertrouwen worden server-side berekend op basis van bevestigde bevindingen, ernst en bewijs.
 - UI: B1-taalindicator, WCAG-indicator, titelcheck, analysebetrouwbaarheid en bevindingen met bewijs toegevoegd. Favicons toegevoegd via `public/favicon.svg`.
 - Validatie: `node scripts/validate-two-phase.js` op 10 voorstellen met score-3 gaps. Resultaat: oude recall 54,2%, nieuwe recall 47,2% (delta -6,9pp), 100% bevindingen met bewijs, 96% concrete herstelacties, 100% voorstel-specifieke raadsvragen, scoreband 41-60, 0 Pass 2-fallbacks. Criteria gehaald volgens `analyse-tweefasige-toets.md`.
+
+### Fase 7b - Onderzoek 7/2-patroon
+
+- Aanleiding: `analyse-tweefasige-toets.md` liet bij alle 10 validatievoorstellen exact 7 Pass 1-kandidaten, 2 verworpen kandidaten en 5 bevindingen zien. Dit was te uniform.
+- Oorzaak 1: Pass 1 prompt bevatte de instructie "7 tot 10 kandidaten", waardoor het model naar de ondergrens 7 convergeerde.
+- Oorzaak 2: `safeArray(pass1.kandidaten).slice(0, 10)` legde een harde bovengrens op Pass 1.
+- Oorzaak 3: `calibrateValidatedFindings()` vulde bij minder dan 3 bevestigde bevindingen aan tot maximaal 5 bevindingen. Bij 7 kandidaten gaf dat structureel 2 verworpen kandidaten.
+- Herstel: prompt aangepast naar geen minimum/maximum; kandidaat-slice verwijderd; vaste aanvulling tot 5 verwijderd. Concrete Pass 1-kandidaten worden alleen nog per kandidaat behouden als zij een concreet ontbrekend of onvoldoende onderbouwd element bevatten.
+- Logging toegevoegd per toetsverzoek: Pass 1-kandidaten, Pass 2-verworpen, overgebleven bevindingen, score en fallbackstatus.
+- Hervalidatie: `scripts/validate-two-phase.js` opnieuw gedraaid. Resultaat: kandidaten 3-5, verworpen 0-1, bevindingen 2-5, oude recall 50,0%, nieuwe recall 44,4% (delta -5,6pp), bewijs 100%, concrete herstelacties 100%, scoreband 43-76.
+- Variatietest: `scripts/investigate-7-2-pattern.js` gedraaid op 5 verschillende voorstellen. Resultaat: kandidaten 4-4, verworpen 0-3, bevindingen 1-4, score 43-92. Het exacte 7/2/5-patroon is weg.

@@ -718,7 +718,7 @@ function normalizeBevinding(item) {
 }
 
 function fallbackBevindingen(kandidaten) {
-  return safeArray(kandidaten).slice(0, 6).map(kand => normalizeBevinding({
+  return safeArray(kandidaten).map(kand => normalizeBevinding({
     rubriek: kand.rubriek,
     ernst: "AANDACHT",
     bevinding: kand.bevinding,
@@ -728,32 +728,57 @@ function fallbackBevindingen(kandidaten) {
   })).filter(item => item.bevinding);
 }
 
-function severityForCandidate(kand) {
+function candidateHasConcreteSignal(kand) {
   const text = `${kand.rubriek || ""} ${kand.bevinding || ""} ${kand.reden || ""}`.toLowerCase();
-  if (/(ontbrekende dekking|dekking ontbreekt|geen dekking|tegenstrijdig bedrag|juridisch onjuist|onuitvoerbaar)/.test(text)) return "BLOKKEREND";
-  return "AANDACHT";
+  if (/(taal|wcag|titel|naamgeving)/.test(String(kand.rubriek || "").toLowerCase())) return false;
+  return /(ontbreekt|mist|geen|niet beschreven|niet onderbouwd|onduidelijk|zonder|paragraaf|beslispunt|dekking|risico|planning|uitvoering|participatie|juridisch|financi)/.test(text);
 }
 
-function promoteCandidate(kand) {
-  const reden = String(kand.reden || "").trim();
-  const bevinding = String(kand.bevinding || "").trim();
-  return normalizeBevinding({
-    rubriek: kand.rubriek,
-    ernst: severityForCandidate(kand),
-    bevinding,
-    bewijs: reden ? `Ontbrekend element: ${reden}` : `Ontbrekend element: ${bevinding}`,
-    herstelactie: `Vul het voorstel aan met een concrete toelichting op: ${bevinding.charAt(0).toLowerCase()}${bevinding.slice(1)}.`,
-    herstelbaar_voor_behandeling: true
-  });
+function herstelactieVoorKandidaat(kand) {
+  const rubriek = String(kand.rubriek || "").toLowerCase();
+  const bevinding = String(kand.bevinding || "dit punt").trim();
+  if (/financi|dekking|krediet|begroting/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Voeg een financiële paragraaf toe met het bedrag, de dekkingsbron, de begrotingspost en het effect bij tegenvallers.";
+  }
+  if (/uitvoering|uitvoerbaar/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Beschrijf wie verantwoordelijk is voor de uitvoering, welke stappen volgen en wanneer de raad over voortgang wordt geïnformeerd.";
+  }
+  if (/risico/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Voeg een risicoparagraaf toe met per risico de kans, impact en mitigerende maatregel.";
+  }
+  if (/participatie|inspraak|stakeholder|bewoner/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Beschrijf welke groepen zijn betrokken, hoe participatie heeft plaatsgevonden en wat met hun inbreng is gedaan.";
+  }
+  if (/planning|tijdpad|termijn/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Neem een tijdpad op met startmoment, belangrijkste mijlpalen, besluitmomenten en verwachte oplevering.";
+  }
+  if (/jurid|grondslag|bevoegd/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Benoem de juridische grondslag of bevoegdheidsbasis en leg uit waarom de raad dit besluit mag nemen.";
+  }
+  if (/alternatief|variant|afweging/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Voeg een korte alternatievenafweging toe waarin staat welke opties zijn overwogen en waarom deze keuze voorligt.";
+  }
+  if (/beslispunt/.test(rubriek + " " + bevinding.toLowerCase())) {
+    return "Koppel elk beslispunt expliciet aan een toelichtende alinea waarin doel, gevolg en onderbouwing van het besluit staan.";
+  }
+  return `Vul het voorstel aan met een concrete toelichting op deze bevinding: ${bevinding}.`;
 }
 
-function calibrateValidatedFindings(bevindingen, kandidaten) {
+function preserveConcretePass1Candidates(bevindingen, kandidaten) {
   const items = [...safeArray(bevindingen)];
-  if (items.length >= 3 || !safeArray(kandidaten).length) return items;
+  const seen = new Set(items.map(item => item.bevinding));
   for (const kand of safeArray(kandidaten)) {
-    if (items.length >= 5) break;
-    const promoted = promoteCandidate(kand);
-    if (!promoted.bevinding || items.some(item => item.bevinding === promoted.bevinding)) continue;
+    if (!candidateHasConcreteSignal(kand)) continue;
+    const promoted = normalizeBevinding({
+      rubriek: kand.rubriek,
+      ernst: "AANDACHT",
+      bevinding: kand.bevinding,
+      bewijs: kand.reden ? `Ontbrekend of onvoldoende onderbouwd element: ${kand.reden}` : `Ontbrekend of onvoldoende onderbouwd element: ${kand.bevinding}`,
+      herstelactie: herstelactieVoorKandidaat(kand),
+      herstelbaar_voor_behandeling: true
+    });
+    if (!promoted.bevinding || seen.has(promoted.bevinding)) continue;
+    seen.add(promoted.bevinding);
     items.push(promoted);
   }
   return items;
@@ -822,7 +847,8 @@ async function callOpenAI(text, dynamicMetadata = {}) {
   const pass1Prompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
 Dit is een brede verkenning. Signaleer wat je opvalt. Volledigheid en bewijs komen in de volgende stap.
 Geef kandidaat-bevindingen, geen eindscore en geen eindadvies.
-Geef bij een normaal inhoudelijk voorstel 7 tot 10 kandidaten. Neem de historische vraagpatronen en juridische context actief mee als zoekrichting.
+Geef alle kandidaten die je aantreft. Geen minimum, geen maximum. Een schoon of procedureel voorstel mag 0 tot 3 kandidaten opleveren; een complex voorstel kan veel meer kandidaten opleveren.
+Neem de historische vraagpatronen en juridische context actief mee als zoekrichting, maar maak er geen quotum van.
 Een kandidaat mag gaan over informatie die vermoedelijk ontbreekt of te summier is, zolang je in de reden concreet noemt welk onderdeel van de tekst of welk ontbrekend element dit raakt.
 
 Neem deze checks expliciet mee:
@@ -880,7 +906,7 @@ ${truncated}`;
   });
 
   const pass1 = parseJsonObject(pass1Response.choices?.[0]?.message?.content, { kandidaten: [] });
-  const kandidaten = safeArray(pass1.kandidaten).slice(0, 10);
+  const kandidaten = safeArray(pass1.kandidaten);
   let pass2 = { resultaten: [] };
 
   if (kandidaten.length) {
@@ -947,7 +973,7 @@ ${validationText}`;
     .filter(item => item.bevinding && item.bewijs && item.herstelactie);
   const pass2Failed = Boolean(pass2.pass2Fout);
   if (pass2Failed && !bevindingen.length) bevindingen = fallbackBevindingen(kandidaten);
-  if (!pass2Failed) bevindingen = calibrateValidatedFindings(bevindingen, kandidaten);
+  if (!pass2Failed) bevindingen = preserveConcretePass1Candidates(bevindingen, kandidaten);
 
   const verworpenKandidaten = pass2Failed ? 0 : Math.max(0, kandidaten.length - bevindingen.length);
   const scoreValue = calculateScore(bevindingen);
@@ -1050,6 +1076,7 @@ app.post("/api/toets", upload.single("pdf"), async (req, res) => {
       gapsGebruikt: dynamicContext ? gapsGebruikt : [],
       wetsartikelenGebruikt: legalContext ? wetsartikelenGebruikt : []
     });
+    console.log(`[toets] pass1_candidates=${result.kandidaten_count ?? 0} pass2_rejected=${result.verworpen_kandidaten ?? 0} findings=${result.bevindingen?.length ?? 0} score=${result.score?.totaal ?? "n/a"} fallback=${Boolean(result.pass2_fallback)}`);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message || "Onbekende fout." });
