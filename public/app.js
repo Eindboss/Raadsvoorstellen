@@ -84,6 +84,12 @@ document.getElementById("result-view-toggle")?.addEventListener("click", (event)
   setResultView(button.dataset.view);
 });
 
+deepView?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-detail-tab]");
+  if (!button) return;
+  setDeepTab(button.dataset.detailTab);
+});
+
 submitBtn.addEventListener("click", async () => {
   setStatus("loading");
   submitBtn.disabled = true;
@@ -154,6 +160,8 @@ function renderBasisView(data) {
   if (!basisView) return;
   const summary = getDecisionSummary(data);
   const topFindings = getTopFindings(data, 3);
+  const totalFindings = safeArray(data.bevindingen).length;
+  const remainingFindings = Math.max(0, totalFindings - topFindings.length);
   const decisions = safeArray(data.beslispunten);
   const underbouwWarnings = getDecisionWarnings(data);
   const blockerText = summary.blokkerend === 1 ? "1 blokkerende bevinding" : `${summary.blokkerend} blokkerende bevindingen`;
@@ -169,6 +177,7 @@ function renderBasisView(data) {
         <div class="decision-main">
           <p class="decision-eyebrow">Besluitrijpheidsadvies</p>
           <h2>${escHtml(summary.label)}</h2>
+          <div class="decision-conclusion">${escHtml(getDecisionConclusion(summary))}</div>
           <div class="decision-meta">
             <span>${attentionText}</span>
             <span>${blockerText}</span>
@@ -191,6 +200,7 @@ function renderBasisView(data) {
         ${topFindings.length ? renderFindingSummaryList(topFindings) : `
           <p class="empty-note">Geen bevestigde bevindingen gevonden. Controleer het voorstel altijd zelf voordat het wordt aangeboden.</p>
         `}
+        ${remainingFindings ? `<button class="more-findings-link" type="button" id="more-findings-link">En ${remainingFindings} overige punt${remainingFindings === 1 ? "" : "en"} in diepgaande analyse</button>` : ""}
       </section>
 
       <section class="basis-section compact-decisions">
@@ -210,40 +220,55 @@ function renderBasisView(data) {
   document.getElementById("copy-report-main")?.addEventListener("click", () => copyCurrentReport());
   document.getElementById("export-pdf-btn")?.addEventListener("click", exportPdf);
   document.getElementById("show-deep-btn")?.addEventListener("click", () => setResultView("deep"));
+  document.getElementById("more-findings-link")?.addEventListener("click", () => {
+    setResultView("deep");
+    setDeepTab("bevindingen");
+  });
 }
 
 function renderDeepView(data) {
   if (!deepView) return;
   deepView.innerHTML = `
     <div class="deep-analysis">
-      <section class="detail-section">
+      <div class="detail-tabs" role="tablist" aria-label="Diepgaande analyse">
+        <button class="detail-tab active" type="button" data-detail-tab="beslispunten">Beslispunten</button>
+        <button class="detail-tab" type="button" data-detail-tab="juridisch">Juridisch</button>
+        <button class="detail-tab" type="button" data-detail-tab="bevindingen">Bevindingen</button>
+        <button class="detail-tab" type="button" data-detail-tab="toegankelijkheid">Toegankelijkheid</button>
+        <button class="detail-tab" type="button" data-detail-tab="onderbouwing">Onderbouwing</button>
+        <button class="detail-tab" type="button" data-detail-tab="technisch">Technisch</button>
+      </div>
+
+      <section class="detail-section detail-panel active" data-detail-panel="beslispunten">
         <h3>Beslispunten</h3>
         <ol class="detail-list">${renderBeslispunten(data)}</ol>
       </section>
 
-      <section class="detail-section">
+      <section class="detail-section detail-panel" data-detail-panel="juridisch">
         <h3>Bevoegdheid</h3>
         ${renderBevoegdheid(data.bevoegdheid)}
       </section>
 
-      <section class="detail-section">
+      <section class="detail-section detail-panel" data-detail-panel="bevindingen">
         <h3>Bevindingen</h3>
         ${renderBevindingen(data)}
       </section>
 
-      <section class="detail-section">
+      <section class="detail-section detail-panel" data-detail-panel="toegankelijkheid">
         <h3>Toegankelijkheid <span>indicatief</span></h3>
         ${renderToegang(data)}
       </section>
 
-      <section class="detail-section detail-wide">
+      <section class="detail-section detail-panel" data-detail-panel="onderbouwing">
         <h3>Onderbouwing</h3>
         <div class="rapport-scroll">${formatOnderbouwing(data.onderbouwing || "")}</div>
       </section>
 
-      <section class="detail-section detail-wide technical-analysis">
-        <h3>Technische analyse</h3>
-        ${renderTechnicalDetails(data)}
+      <section class="detail-section detail-panel technical-analysis" data-detail-panel="technisch">
+        <details>
+          <summary>Technische analyse</summary>
+          ${renderTechnicalDetails(data)}
+        </details>
       </section>
     </div>
   `;
@@ -260,8 +285,18 @@ function setResultView(view, options = {}) {
   resultGrid?.scrollTo({ top: 0, left: 0 });
 }
 
+function setDeepTab(tab) {
+  const selected = tab || "beslispunten";
+  deepView?.querySelectorAll("[data-detail-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.detailTab === selected);
+  });
+  deepView?.querySelectorAll("[data-detail-panel]").forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.detailPanel === selected);
+  });
+}
+
 function getDecisionSummary(data) {
-  const score = Number.isFinite(data?.score?.totaal) ? data.score.totaal : 0;
+  const score = getScoreTotal(data);
   const bevindingen = safeArray(data?.bevindingen);
   const blokkerend = bevindingen.filter((item) => normalizeErnst(item) === "BLOKKEREND").length;
   const aandacht = bevindingen.filter((item) => normalizeErnst(item) === "AANDACHT").length;
@@ -277,6 +312,18 @@ function getDecisionSummary(data) {
     optionieel,
     vertrouwen: Number.isFinite(data?.vertrouwen) ? data.vertrouwen : null,
   };
+}
+
+function getScoreTotal(data) {
+  if (Number.isFinite(data?.score?.totaal)) return data.score.totaal;
+  if (Number.isFinite(data?.score)) return data.score;
+  return 0;
+}
+
+function getDecisionConclusion(summary) {
+  if (summary.blokkerend) return "Niet besluitrijp - los eerst de blokkerende punten op";
+  if (summary.aandacht > 0) return "Besluit mogelijk na aanpassing";
+  return "Direct besluitrijp";
 }
 
 function getTopFindings(data, limit = 3) {
@@ -479,6 +526,7 @@ function buildPrintableReportHtml(data) {
   return `
     <div class="print-document">
       <h1>Kwaliteitstoets raadsvoorstel</h1>
+      <h2 class="print-verdict ${escClass(summary.statusClass)}">${escHtml(summary.label)}</h2>
       <p>Datum analyse: ${escHtml(new Date().toLocaleString("nl-NL"))}</p>
       <p>Gemeente: ${escHtml(data.gemeente && data.gemeente !== "Onbekend" ? data.gemeente : "Onbekend")}</p>
 
