@@ -1150,3 +1150,456 @@ input[type="url"]:focus {
     min-height: 2.85rem;
   }
 }
+
+/* Tweelaags resultaatmodel */
+.result-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.result-view-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 0.2rem;
+  padding: 0.22rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.94);
+  box-shadow: var(--shadow-sm);
+}
+
+.view-toggle {
+  min-height: 2.1rem;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.view-toggle.active {
+  background: var(--navy);
+  color: #fff;
+}
+
+.basis-view,
+.deep-view {
+  min-height: 0;
+}
+
+.basis-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 980px;
+}
+
+.decision-hero {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--amber);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.decision-hero.good { border-left-color: var(--green); }
+.decision-hero.mild { border-left-color: #eab308; }
+.decision-hero.warn { border-left-color: #f59e0b; }
+.decision-hero.danger { border-left-color: var(--red); }
+
+.decision-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border: 7px solid #e2e8f0;
+  border-radius: 50%;
+  background: #f8fafc;
+}
+
+.decision-score-number {
+  color: var(--ink);
+  font-size: 1.8rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.decision-score-caption,
+.decision-eyebrow {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.decision-main h2 {
+  margin: 0.12rem 0 0.42rem;
+  color: var(--ink);
+  font-size: 1.55rem;
+  line-height: 1.15;
+}
+
+.decision-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.decision-meta span,
+.blocking-callout {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.blocking-callout {
+  margin-top: 0.55rem;
+  border-radius: 6px;
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.basis-section,
+.detail-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.basis-section {
+  padding: 0.9rem 1rem;
+}
+
+.basis-section h3,
+.detail-section h3 {
+  margin-bottom: 0.55rem;
+  color: var(--navy-2);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.basis-section p {
+  color: var(--ink-soft);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-title-row span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.finding-summary-list,
+.full-finding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  list-style: none;
+}
+
+.finding-summary-list li,
+.full-finding-list li {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #f3dfb7;
+  border-left: 4px solid #e9b44c;
+  border-radius: 6px;
+  background: var(--amber-soft);
+  color: #7c4a03;
+}
+
+.finding-summary-list li.blokkerend,
+.full-finding-list li.blokkerend {
+  border-color: #fecaca;
+  border-left-color: #ef4444;
+  background: var(--red-soft);
+  color: #7f1d1d;
+}
+
+.finding-summary-list li.optioneel,
+.full-finding-list li.optioneel {
+  border-color: #dbe4ee;
+  border-left-color: #9aa3b2;
+  background: #f8fafc;
+  color: var(--ink-soft);
+}
+
+.finding-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.22rem;
+}
+
+.finding-severity,
+.finding-rubric {
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.finding-rubric {
+  color: var(--muted);
+}
+
+.finding-summary-list strong,
+.full-finding-list strong {
+  display: block;
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.finding-summary-list p,
+.full-finding-list p {
+  margin-top: 0.28rem;
+  color: inherit;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.finding-summary-list p span,
+.full-finding-list p span {
+  font-weight: 800;
+}
+
+.compact-decision-list,
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.36rem;
+  padding-left: 1.1rem;
+  color: var(--ink-soft);
+}
+
+.compact-decision-list li,
+.detail-list li {
+  position: relative;
+  padding-left: 0.9rem;
+}
+
+.decision-warning,
+.decision-detail-warning {
+  margin-top: 0.52rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 6px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.action-btn {
+  min-height: 2.45rem;
+  padding: 0.58rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--navy);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.action-btn.primary {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+
+.deep-analysis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.detail-section {
+  min-width: 0;
+  padding: 0.85rem 0.95rem;
+}
+
+.detail-wide {
+  grid-column: 1 / -1;
+}
+
+.technical-analysis dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1rem;
+}
+
+.technical-analysis dl div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.technical-analysis dt {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.technical-analysis dd {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.empty-note {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.print-report {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .deep-analysis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-wide,
+  .technical-analysis {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .result-shell {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .result-view-toggle {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .decision-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-score {
+    width: 82px;
+    height: 82px;
+  }
+
+  .decision-main h2 {
+    font-size: 1.28rem;
+  }
+
+  .primary-actions {
+    flex-direction: column;
+  }
+
+  .deep-analysis,
+  .technical-analysis dl,
+  .technical-analysis dl div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+    color: #111827;
+  }
+
+  .shell,
+  .left-panel,
+  .dashboard,
+  .result-view-toggle,
+  .primary-actions,
+  .report-actions {
+    display: none !important;
+  }
+
+  .print-report {
+    display: block !important;
+  }
+
+  .print-document {
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    color: #111827;
+  }
+
+  .print-document h1 {
+    margin-bottom: 0.4rem;
+    font-size: 20pt;
+  }
+
+  .print-document h2 {
+    margin: 1rem 0 0.35rem;
+    padding-bottom: 0.12rem;
+    border-bottom: 1px solid #d1d5db;
+    font-size: 14pt;
+  }
+
+  .print-document h3 {
+    margin: 0.7rem 0 0.2rem;
+    font-size: 11.5pt;
+  }
+
+  .print-document p,
+  .print-document li {
+    margin-bottom: 0.25rem;
+  }
+
+  .print-document section {
+    break-inside: avoid;
+  }
+}

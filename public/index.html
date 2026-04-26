@@ -97,10 +97,10 @@
         </div>
         <div class="score-label" id="score-label">Beoordeeld</div>
         <div class="trust-label" id="trust-label"></div>
-        <div class="candidate-label" id="candidate-label"></div>
         <div class="score-cats" id="score-cats"></div>
         <div class="report-actions hidden" id="report-actions">
           <button id="copy-report-btn" class="btn-secondary" type="button">Kopieer rapport</button>
+          <button id="export-pdf-sidebar-btn" class="btn-secondary" type="button">Exporteer PDF</button>
           <span id="copy-feedback" class="copy-feedback"></span>
         </div>
       </div>
@@ -134,49 +134,22 @@
         </div>
       </div>
 
-      <!-- Resultaat grid -->
-      <div id="result-grid" class="result-grid hidden">
-
-        <!-- Kern: banner bovenaan, volle breedte -->
-        <div class="dash-card card-kern">
-          <div class="kern-summary">
-            <div class="card-label">Kern van het voorstel</div>
-            <p id="kern-text"></p>
-          </div>
-          <div class="kern-beslispunten">
-            <div class="card-label">Beslispunten</div>
-            <ol id="beslispunten-list"></ol>
-          </div>
+      <!-- Resultaat -->
+      <div id="result-grid" class="result-grid result-shell hidden">
+        <div class="result-view-toggle" id="result-view-toggle" role="tablist" aria-label="Resultaatweergave">
+          <button id="basis-toggle" class="view-toggle active" type="button" data-view="basis">Basisweergave</button>
+          <button id="deep-toggle" class="view-toggle" type="button" data-view="deep">Diepgaande analyse</button>
         </div>
 
-        <!-- Primaire cards: bevoegdheid, verbeter, toegankelijkheid naast elkaar -->
-        <div class="dash-card card-bevoegdheid">
-          <div class="card-label">Raadsbevoegdheid</div>
-          <div id="bevoegdheid-content"></div>
-        </div>
-
-        <div class="dash-card card-verbeter">
-          <div class="card-label">Verbeterpunten</div>
-          <div id="blocking-banner" class="blocking-banner hidden"></div>
-          <ul id="verbeter-list"></ul>
-        </div>
-
-        <div class="dash-card card-toegankelijkheid">
-          <div class="card-label">Toegankelijkheid <span class="indicatief-label">indicatief</span></div>
-          <div id="toegankelijkheid-content"></div>
-        </div>
-
-        <!-- Kwaliteitstoets: onderbouwing onderaan -->
-        <div class="dash-card card-rapport">
-          <div class="card-label">Kwaliteitstoets</div>
-          <div id="rapport-content" class="rapport-scroll"></div>
-        </div>
-
+        <section id="basis-view" class="basis-view"></section>
+        <section id="deep-view" class="deep-view hidden"></section>
       </div>
 
     </main>
 
   </div>
+
+  <div id="print-report" class="print-report" aria-hidden="true"></div>
 
   <script src="app.js"></script>
 </body>

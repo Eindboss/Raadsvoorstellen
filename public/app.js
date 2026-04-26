@@ -10,28 +10,30 @@ const statusError = document.getElementById("status-error");
 const errorMessage = document.getElementById("error-message");
 const emptyState = document.getElementById("empty-state");
 const resultGrid = document.getElementById("result-grid");
+const basisView = document.getElementById("basis-view");
+const deepView = document.getElementById("deep-view");
 const copyReportBtn = document.getElementById("copy-report-btn");
 const copyFeedback = document.getElementById("copy-feedback");
+const exportPdfSidebarBtn = document.getElementById("export-pdf-sidebar-btn");
+const printReport = document.getElementById("print-report");
 
 let mode = "pdf";
 
-// ── Scan animatie ──────────────────────────────────────────
 const SCAN_STEPS = [
-  { label: "Document inladen",                 duration: 2000 },
-  { label: "Tekst extraheren",                 duration: 3000 },
-  { label: "Voorstel classificeren",           duration: 4000 },
-  { label: "Kandidaten detecteren · Pass 1",   duration: 6000 },
-  { label: "Bevindingen valideren · Pass 2",   duration: null },  // wacht op response
+  { label: "Document inladen", duration: 2000 },
+  { label: "Tekst extraheren", duration: 3000 },
+  { label: "Voorstel classificeren", duration: 4000 },
+  { label: "Kandidaten detecteren · Pass 1", duration: 6000 },
+  { label: "Bevindingen valideren · Pass 2", duration: null },
 ];
 
 let scanTimers = [];
 
 function startScanAnimation() {
   const stepEls = document.querySelectorAll(".scan-step");
-  stepEls.forEach(el => el.className = "scan-step");
-
+  stepEls.forEach((el) => { el.className = "scan-step"; });
   let current = 0;
-  stepEls[0].classList.add("active");
+  stepEls[0]?.classList.add("active");
 
   function advance() {
     if (current >= stepEls.length - 1) return;
@@ -40,44 +42,32 @@ function startScanAnimation() {
     current++;
     stepEls[current].classList.add("active");
     const next = SCAN_STEPS[current];
-    if (next && next.duration) {
-      scanTimers.push(setTimeout(advance, next.duration));
-    }
+    if (next?.duration) scanTimers.push(setTimeout(advance, next.duration));
   }
 
-  const first = SCAN_STEPS[0];
-  if (first.duration) {
-    scanTimers.push(setTimeout(advance, first.duration));
-  }
+  if (SCAN_STEPS[0]?.duration) scanTimers.push(setTimeout(advance, SCAN_STEPS[0].duration));
 }
 
 function stopScanAnimation() {
-  scanTimers.forEach(t => clearTimeout(t));
+  scanTimers.forEach((timer) => clearTimeout(timer));
   scanTimers = [];
-  // Alle stappen afronden
-  document.querySelectorAll(".scan-step").forEach(el => {
+  document.querySelectorAll(".scan-step").forEach((el) => {
     el.classList.remove("active");
     el.classList.add("done");
   });
 }
 
-// Klik op file-name opent file dialog
 fileNameEl.addEventListener("click", () => pdfFileInput.click());
 
 pdfFileInput.addEventListener("change", () => {
   const file = pdfFileInput.files[0];
-  if (file) {
-    fileNameEl.textContent = file.name;
-    fileNameEl.classList.add("has-file");
-  } else {
-    fileNameEl.textContent = "Geen bestand gekozen";
-    fileNameEl.classList.remove("has-file");
-  }
+  fileNameEl.textContent = file ? file.name : "Geen bestand gekozen";
+  fileNameEl.classList.toggle("has-file", Boolean(file));
 });
 
-tabs.forEach(tab => {
+tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    tabs.forEach(t => t.classList.remove("active"));
+    tabs.forEach((item) => item.classList.remove("active"));
     tab.classList.add("active");
     mode = tab.dataset.mode;
     pdfInput.classList.toggle("hidden", mode !== "pdf");
@@ -85,17 +75,13 @@ tabs.forEach(tab => {
   });
 });
 
-copyReportBtn?.addEventListener("click", async () => {
-  if (!window.lastResult) return;
-  try {
-    await copyTextToClipboard(buildPlainTextReport(window.lastResult));
-    if (copyFeedback) {
-      copyFeedback.textContent = "Gekopieerd ✓";
-      setTimeout(() => { copyFeedback.textContent = ""; }, 2000);
-    }
-  } catch (err) {
-    if (copyFeedback) copyFeedback.textContent = "Kopiëren mislukt";
-  }
+copyReportBtn?.addEventListener("click", () => copyCurrentReport());
+exportPdfSidebarBtn?.addEventListener("click", exportPdf);
+
+document.getElementById("result-view-toggle")?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-view]");
+  if (!button) return;
+  setResultView(button.dataset.view);
 });
 
 submitBtn.addEventListener("click", async () => {
@@ -117,12 +103,10 @@ submitBtn.addEventListener("click", async () => {
 
     const res = await fetch("/api/toets", { method: "POST", body: formData });
     const data = await res.json();
-
     if (!res.ok) throw new Error(data.error || "Er ging iets mis.");
 
     setStatus("idle");
     renderResult(data);
-
   } catch (err) {
     setStatus("error", err.message);
   } finally {
@@ -151,173 +135,325 @@ function setStatus(state, msg) {
 }
 
 function renderResult(data) {
-  window.lastResult = data;
+  window.lastResult = data || {};
 
-  renderBeslispunten(data);
-
-  // Kern
-  document.getElementById("kern-text").textContent = data.kern || "";
-
-  renderToegang(data);
-
-  // Bevestigde bevindingen
-  renderBevindingen(data);
-
-  // Gemeente
-  const heeftGemeente = data.gemeente && data.gemeente !== "Onbekend";
-  if (heeftGemeente) {
-    document.getElementById("gemeente-naam").textContent = data.gemeente;
-    document.getElementById("gemeente-badge").classList.remove("hidden");
-  }
-
-  if (heeftGemeente) {
-    document.getElementById("voorstel-info").classList.remove("hidden");
-  }
-
-  // Bevoegdheid
-  const bev = data.bevoegdheid || {};
-  const oordeel = bev.oordeel || "onduidelijk";
-  const labels = {
-    ja: "Bevoegdheid aangetoond",
-    onduidelijk: "Onduidelijk",
-    nee: "Ontbreekt",
-    "niet van toepassing": "Niet van toepassing"
-  };
-  document.getElementById("bevoegdheid-content").innerHTML = `
-    <div class="bevoegdheid-oordeel ${oordeel}">${labels[oordeel] || oordeel}</div>
-    <p class="bevoegdheid-toelichting">${escHtml(bev.toelichting || "")}</p>
-    ${bev.grondslag && bev.grondslag !== "niet gevonden"
-      ? `<p class="bevoegdheid-grondslag">Grondslag: ${escHtml(bev.grondslag)}</p>`
-      : ""}
-  `;
-
-  // Onderbouwing
-  document.getElementById("rapport-content").innerHTML =
-    formatOnderbouwing(data.onderbouwing || "");
-
-  renderScore(data.score);
+  renderBasisView(window.lastResult);
+  renderDeepView(window.lastResult);
+  renderScore(window.lastResult.score);
   renderReportActions();
+  renderGemeente(window.lastResult);
+  setResultView("basis", { persist: false });
 
   statusIdle.classList.add("hidden");
   emptyState.classList.add("hidden");
   resultGrid.classList.remove("hidden");
-  resetResultScrollPositions();
+  resultGrid.scrollTo({ top: 0, left: 0 });
+}
+
+function renderBasisView(data) {
+  if (!basisView) return;
+  const summary = getDecisionSummary(data);
+  const topFindings = getTopFindings(data, 3);
+  const decisions = safeArray(data.beslispunten);
+  const underbouwWarnings = getDecisionWarnings(data);
+  const blockerText = summary.blokkerend === 1 ? "1 blokkerende bevinding" : `${summary.blokkerend} blokkerende bevindingen`;
+  const attentionText = summary.aandacht === 1 ? "1 aandachtspunt" : `${summary.aandacht} aandachtspunten`;
+
+  basisView.innerHTML = `
+    <article class="basis-overview">
+      <section class="decision-hero ${summary.statusClass}">
+        <div class="decision-score">
+          <span class="decision-score-number">${escHtml(summary.score)}</span>
+          <span class="decision-score-caption">Score</span>
+        </div>
+        <div class="decision-main">
+          <p class="decision-eyebrow">Besluitrijpheidsadvies</p>
+          <h2>${escHtml(summary.label)}</h2>
+          <div class="decision-meta">
+            <span>${attentionText}</span>
+            <span>${blockerText}</span>
+            ${summary.vertrouwen ? `<span>Analysebetrouwbaarheid: ${summary.vertrouwen}%</span>` : ""}
+          </div>
+          ${summary.blokkerend ? `<div class="blocking-callout">Niet besluitrijp: los eerst de blokkerende bevindingen op.</div>` : ""}
+        </div>
+      </section>
+
+      <section class="basis-section basis-kern">
+        <h3>Kern van het voorstel</h3>
+        <p>${escHtml(data.kern || "Geen kernsamenvatting beschikbaar.")}</p>
+      </section>
+
+      <section class="basis-section">
+        <div class="section-title-row">
+          <h3>Belangrijkste herstelacties</h3>
+          <span>${topFindings.length ? `Top ${topFindings.length}` : "Geen bevestigde bevindingen"}</span>
+        </div>
+        ${topFindings.length ? renderFindingSummaryList(topFindings) : `
+          <p class="empty-note">Geen bevestigde bevindingen gevonden. Controleer het voorstel altijd zelf voordat het wordt aangeboden.</p>
+        `}
+      </section>
+
+      <section class="basis-section compact-decisions">
+        <h3>Beslispunten</h3>
+        ${decisions.length ? renderCompactDecisions(decisions, data) : `<p class="empty-note">Geen beslispunten herkend.</p>`}
+        ${underbouwWarnings.length ? `<div class="decision-warning">${underbouwWarnings.length} beslispunt(en) vragen extra onderbouwing.</div>` : ""}
+      </section>
+
+      <div class="primary-actions">
+        <button id="copy-report-main" class="action-btn primary" type="button">Kopieer rapport</button>
+        <button id="export-pdf-btn" class="action-btn" type="button">Exporteer PDF</button>
+        <button id="show-deep-btn" class="action-btn" type="button">Toon diepgaande analyse</button>
+      </div>
+    </article>
+  `;
+
+  document.getElementById("copy-report-main")?.addEventListener("click", () => copyCurrentReport());
+  document.getElementById("export-pdf-btn")?.addEventListener("click", exportPdf);
+  document.getElementById("show-deep-btn")?.addEventListener("click", () => setResultView("deep"));
+}
+
+function renderDeepView(data) {
+  if (!deepView) return;
+  deepView.innerHTML = `
+    <div class="deep-analysis">
+      <section class="detail-section">
+        <h3>Beslispunten</h3>
+        <ol class="detail-list">${renderBeslispunten(data)}</ol>
+      </section>
+
+      <section class="detail-section">
+        <h3>Bevoegdheid</h3>
+        ${renderBevoegdheid(data.bevoegdheid)}
+      </section>
+
+      <section class="detail-section">
+        <h3>Bevindingen</h3>
+        ${renderBevindingen(data)}
+      </section>
+
+      <section class="detail-section">
+        <h3>Toegankelijkheid <span>indicatief</span></h3>
+        ${renderToegang(data)}
+      </section>
+
+      <section class="detail-section detail-wide">
+        <h3>Onderbouwing</h3>
+        <div class="rapport-scroll">${formatOnderbouwing(data.onderbouwing || "")}</div>
+      </section>
+
+      <section class="detail-section detail-wide technical-analysis">
+        <h3>Technische analyse</h3>
+        ${renderTechnicalDetails(data)}
+      </section>
+    </div>
+  `;
+}
+
+function setResultView(view, options = {}) {
+  const selected = view === "deep" ? "deep" : "basis";
+  basisView?.classList.toggle("hidden", selected !== "basis");
+  deepView?.classList.toggle("hidden", selected !== "deep");
+  document.querySelectorAll(".view-toggle").forEach((button) => {
+    button.classList.toggle("active", button.dataset.view === selected);
+  });
+  if (options.persist !== false) localStorage.setItem("rv_result_view", selected);
+  resultGrid?.scrollTo({ top: 0, left: 0 });
+}
+
+function getDecisionSummary(data) {
+  const score = Number.isFinite(data?.score?.totaal) ? data.score.totaal : 0;
+  const bevindingen = safeArray(data?.bevindingen);
+  const blokkerend = bevindingen.filter((item) => normalizeErnst(item) === "BLOKKEREND").length;
+  const aandacht = bevindingen.filter((item) => normalizeErnst(item) === "AANDACHT").length;
+  const optionieel = bevindingen.filter((item) => normalizeErnst(item) === "OPTIONEEL").length;
+  const label = blokkerend ? "Niet besluitrijp" : normalizeScoreLabel(data?.score_label, score);
+  const statusClass = blokkerend || score < 50 ? "danger" : score >= 85 ? "good" : score >= 65 ? "mild" : "warn";
+  return {
+    score,
+    label,
+    statusClass,
+    blokkerend,
+    aandacht,
+    optionieel,
+    vertrouwen: Number.isFinite(data?.vertrouwen) ? data.vertrouwen : null,
+  };
+}
+
+function getTopFindings(data, limit = 3) {
+  return safeArray(data?.bevindingen)
+    .slice()
+    .sort((a, b) => severityRank(b) - severityRank(a))
+    .slice(0, limit);
+}
+
+function renderFindingSummaryList(findings) {
+  return `<ul class="finding-summary-list">
+    ${findings.map((item) => `
+      <li class="${escClass(normalizeErnst(item))}">
+        <div class="finding-line">
+          <span class="finding-severity">${escHtml(labelForSeverity(item))}</span>
+          ${renderRecoveryLabel(item)}
+        </div>
+        <strong>${escHtml(item.bevinding || "Bevinding zonder titel")}</strong>
+        ${item.herstelactie ? `<p><span>Herstelactie:</span> ${escHtml(item.herstelactie)}</p>` : ""}
+      </li>
+    `).join("")}
+  </ul>`;
+}
+
+function renderCompactDecisions(decisions, data) {
+  const checks = safeArray(data.beslispunten_check);
+  return `<ol class="compact-decision-list">
+    ${decisions.map((punt, index) => {
+      const check = findBeslispuntCheck(punt, checks, index);
+      const statusClass = check && typeof check.onderbouwd === "boolean" ? (check.onderbouwd ? "ok" : "warn") : "";
+      return `<li>${statusClass ? `<span class="decision-status ${statusClass}" aria-hidden="true"></span>` : ""}${escHtml(punt)}</li>`;
+    }).join("")}
+  </ol>`;
 }
 
 function renderBeslispunten(data) {
-  const beslispunten = data.beslispunten || [];
-  const checks = data.beslispunten_check || [];
-  document.getElementById("beslispunten-list").innerHTML = beslispunten
-    .map((punt, index) => {
-      const check = findBeslispuntCheck(punt, checks, index);
-      const statusClass = check && typeof check.onderbouwd === "boolean"
-        ? (check.onderbouwd ? "ok" : "warn")
-        : "";
-      const status = statusClass
-        ? `<span class="decision-status ${statusClass}" aria-hidden="true"></span>`
-        : "";
-      return `<li>${status}<span class="decision-text">${escHtml(punt)}</span></li>`;
-    })
-    .join("");
+  const beslispunten = safeArray(data?.beslispunten);
+  const checks = safeArray(data?.beslispunten_check);
+  if (!beslispunten.length) return `<li class="empty-note">Geen beslispunten herkend.</li>`;
+  return beslispunten.map((punt, index) => {
+    const check = findBeslispuntCheck(punt, checks, index);
+    const statusClass = check && typeof check.onderbouwd === "boolean" ? (check.onderbouwd ? "ok" : "warn") : "";
+    const missing = check?.onderbouwd === false && check.ontbrekende_onderbouwing
+      ? `<div class="decision-detail-warning">${escHtml(check.ontbrekende_onderbouwing)}</div>`
+      : "";
+    return `<li>${statusClass ? `<span class="decision-status ${statusClass}" aria-hidden="true"></span>` : ""}<span>${escHtml(punt)}</span>${missing}</li>`;
+  }).join("");
 }
 
 function findBeslispuntCheck(punt, checks, index) {
   if (!Array.isArray(checks) || !checks.length) return null;
   if (checks[index]) return checks[index];
   const normalized = normalizeText(punt);
-  return checks.find(check => {
+  return checks.find((check) => {
     const candidate = normalizeText(check.beslispunt || "");
     return candidate && (candidate.includes(normalized) || normalized.includes(candidate));
   }) || null;
 }
 
 function renderBevindingen(data) {
-  const bevindingen = data.bevindingen || [];
-  const blokkerend = bevindingen.filter(b => String(b.ernst || "").toUpperCase() === "BLOKKEREND").length;
-  const banner = document.getElementById("blocking-banner");
-  if (banner) {
-    if (blokkerend) {
-      banner.textContent = `${blokkerend} blokkerende bevinding${blokkerend === 1 ? "" : "en"} - voorstel is niet besluitrijp`;
-      banner.classList.remove("hidden");
-    } else {
-      banner.classList.add("hidden");
-      banner.textContent = "";
-    }
-  }
-
-  document.getElementById("verbeter-list").innerHTML = bevindingen.length
-    ? bevindingen.map(b => `
-      <li class="bevinding-item ${escClass(b.ernst)}">
-        <strong>${escHtml(b.ernst || "AANDACHT")} · ${escHtml(b.rubriek || "Algemeen")}</strong>
-        ${renderRecoveryLabel(b)}
-        <span>${escHtml(b.bevinding || "")}</span>
-        ${b.bewijs ? `<small>Bewijs: ${escHtml(b.bewijs)}</small>` : ""}
-        ${b.herstelactie ? `<small>Herstel: ${escHtml(b.herstelactie)}</small>` : ""}
-      </li>`).join("")
-    : `<li class="bevinding-item geen">Geen bevestigde bevindingen.</li>`;
+  const bevindingen = safeArray(data?.bevindingen);
+  if (!bevindingen.length) return `<p class="empty-note">Geen bevestigde bevindingen.</p>`;
+  return `<ul class="full-finding-list">
+    ${bevindingen.map((b) => `
+      <li class="${escClass(normalizeErnst(b))}">
+        <div class="finding-line">
+          <span class="finding-severity">${escHtml(labelForSeverity(b))}</span>
+          <span class="finding-rubric">${escHtml(b.rubriek || "Algemeen")}</span>
+          ${renderRecoveryLabel(b)}
+        </div>
+        <strong>${escHtml(b.bevinding || "")}</strong>
+        ${b.bewijs ? `<p><span>Bewijs:</span> ${escHtml(b.bewijs)}</p>` : ""}
+        ${b.herstelactie ? `<p><span>Herstelactie:</span> ${escHtml(b.herstelactie)}</p>` : ""}
+      </li>
+    `).join("")}
+  </ul>`;
 }
 
 function renderRecoveryLabel(bevinding) {
-  if (typeof bevinding.herstelbaar_voor_behandeling !== "boolean") return "";
-  const herstelbaar = bevinding.herstelbaar_voor_behandeling;
-  return `<span class="recovery-label ${herstelbaar ? "green" : "red"}">${herstelbaar ? "Herstelbaar vóór behandeling" : "Vereist nader traject"}</span>`;
+  if (typeof bevinding?.herstelbaar_voor_behandeling !== "boolean") return "";
+  return `<span class="recovery-label ${bevinding.herstelbaar_voor_behandeling ? "green" : "red"}">${bevinding.herstelbaar_voor_behandeling ? "Herstelbaar vóór behandeling" : "Vereist nader traject"}</span>`;
+}
+
+function renderBevoegdheid(bev = {}) {
+  bev = bev || {};
+  const oordeel = bev.oordeel || "onduidelijk";
+  const labels = {
+    ja: "Bevoegdheid aangetoond",
+    onduidelijk: "Onduidelijk",
+    nee: "Ontbreekt",
+    "niet van toepassing": "Niet van toepassing",
+  };
+  return `
+    <div class="bevoegdheid-oordeel ${escClass(oordeel)}">${escHtml(labels[oordeel] || oordeel)}</div>
+    <p class="bevoegdheid-toelichting">${escHtml(bev.toelichting || "Geen toelichting beschikbaar.")}</p>
+    ${bev.grondslag && bev.grondslag !== "niet gevonden" ? `<p class="bevoegdheid-grondslag">Grondslag: ${escHtml(bev.grondslag)}</p>` : ""}
+  `;
+}
+
+function renderToegang(data) {
+  const rows = [];
+  const tc = data?.titelcheck;
+  const lb = data?.leesbaarheid;
+  const b1 = data?.b1 || data?.taal_b1;
+
+  if (tc?.oordeel) {
+    rows.push(renderAccessRow("Titel", tc.oordeel, tc.oordeel === "Duidelijk" ? "ok" : tc.oordeel === "Matig" ? "warn" : "err", tc.suggestie));
+  }
+  if (lb?.zelfstandig_leesbaar) {
+    const cls = lb.zelfstandig_leesbaar === "Zelfstandig leesbaar" ? "ok" : lb.zelfstandig_leesbaar === "Beperkt zelfstandig" ? "warn" : "err";
+    const toelichting = String(lb.zonder_bijlagen || "").toLowerCase() === "nee" ? "Kern staat deels alleen in bijlagen" : lb.zonder_bijlagen_toelichting;
+    rows.push(renderAccessRow("Leesbaarheid", lb.zelfstandig_leesbaar, cls, toelichting));
+  }
+  if (b1?.oordeel) {
+    const cls = ["Goed", "B1-conform"].includes(b1.oordeel) ? "ok" : b1.oordeel === "Matig" ? "warn" : "err";
+    const toelichting = b1.toelichting || (Array.isArray(b1.voorbeelden) ? b1.voorbeelden.slice(0, 2).join(" ") : "");
+    rows.push(renderAccessRow("Taal B1", b1.oordeel, cls, toelichting));
+  }
+
+  return rows.length ? rows.join("") : `<p class="toeg-leeg">Geen toegankelijkheidsdata beschikbaar.</p>`;
+}
+
+function renderAccessRow(label, value, cls, toelichting) {
+  return `<div class="toeg-row">
+    <div class="toeg-label">${escHtml(label)}</div>
+    <div class="toeg-val ${escClass(cls)}">${escHtml(value)}${toelichting ? `<div class="toeg-toelichting">${escHtml(toelichting)}</div>` : ""}</div>
+  </div>`;
+}
+
+function renderTechnicalDetails(data) {
+  const gaps = safeArray(data.gaps_gebruikt);
+  const articles = safeArray(data.wetsartikelen_gebruikt);
+  const rows = [
+    ["Hoofdtype", data.hoofd_type || data.classificatie?.hoofdType || "Onbekend"],
+    ["Dynamische context", data.dynamische_context_actief ? "Actief" : "Niet actief"],
+    ["Gaps gebruikt", gaps.length ? gaps.join(", ") : "Geen"],
+    ["Juridische context", data.juridische_context_actief ? "Actief" : "Niet actief"],
+    ["Wetsartikelen", articles.length ? articles.join(", ") : "Geen"],
+    ["Kandidaten Pass 1", Number.isFinite(data.kandidaten_count) ? data.kandidaten_count : "Onbekend"],
+    ["Verworpen na bewijscheck", Number.isFinite(data.verworpen_kandidaten) ? data.verworpen_kandidaten : "Onbekend"],
+    ["Pass 2 fallback", data.pass2_fallback ? "Ja" : "Nee"],
+  ];
+  return `<dl>${rows.map(([label, value]) => `<div><dt>${escHtml(label)}</dt><dd>${escHtml(value)}</dd></div>`).join("")}</dl>`;
 }
 
 function renderScore(score) {
   if (!score) return;
+  const summary = getDecisionSummary(window.lastResult || {});
   const panel = document.getElementById("score-panel");
   const ring = document.getElementById("score-ring");
   const numEl = document.getElementById("score-number");
   const labelEl = document.getElementById("score-label");
   const trustEl = document.getElementById("trust-label");
-  const candidateEl = document.getElementById("candidate-label");
   const catsEl = document.getElementById("score-cats");
-
-  const totaal = score.totaal || 0;
   const circumference = 213.6;
-  const offset = circumference - (totaal / 100) * circumference;
-
-  // Kleur op basis van gecalibreerde scorebanden
-  const kleur = totaal >= 85 ? "#22c55e" : totaal >= 65 ? "#eab308" : totaal >= 50 ? "#f59e0b" : "#ef4444";
-  const label = window.lastResult?.score_label || (totaal >= 85 ? "Besluitrijp" : totaal >= 65 ? "Lichte verbeterpunten" : totaal >= 50 ? "Verbeterd voor behandeling" : "Niet besluitrijp");
+  const offset = circumference - (summary.score / 100) * circumference;
+  const kleur = summary.statusClass === "good" ? "#22c55e" : summary.statusClass === "mild" ? "#eab308" : summary.statusClass === "warn" ? "#f59e0b" : "#ef4444";
 
   ring.style.strokeDashoffset = offset;
   ring.style.stroke = kleur;
-  numEl.textContent = totaal;
-  labelEl.textContent = label;
-  if (trustEl) {
-    const vertrouwen = window.lastResult?.vertrouwen;
-    trustEl.textContent = Number.isFinite(vertrouwen) ? `Analysebetrouwbaarheid: ${vertrouwen}%` : "";
-  }
-  if (candidateEl) {
-    const verworpen = window.lastResult?.verworpen_kandidaten;
-    const bevindingen = window.lastResult?.bevindingen || [];
-    candidateEl.textContent = Number.isFinite(verworpen)
-      ? `${verworpen + bevindingen.length} kandidaten geanalyseerd · ${verworpen} verworpen na bewijscheck`
-      : "";
-  }
-
-  // Categorieën
+  numEl.textContent = summary.score;
+  labelEl.textContent = summary.label;
+  trustEl.textContent = summary.vertrouwen ? `Analysebetrouwbaarheid: ${summary.vertrouwen}%` : "";
   catsEl.innerHTML = Object.entries(score.onderdelen || {})
-    .map(([naam, status]) => `
-      <div class="score-cat">
-        <span class="score-dot ${status}"></span>
-        <span>${naam}</span>
-      </div>`)
+    .map(([naam, status]) => `<div class="score-cat"><span class="score-dot ${escClass(status)}"></span><span>${escHtml(naam)}</span></div>`)
     .join("");
-
-  // Animeer ring
   ring.style.transition = "stroke-dashoffset 1s ease, stroke 0.3s ease";
-
   panel.classList.remove("hidden");
   const sd = document.getElementById("score-divider");
   if (sd) sd.style.display = "";
 }
 
 function formatOnderbouwing(tekst) {
+  const value = String(tekst || "");
   const secties = ["Aandachtspunten", "Risico's", "Advies"];
   const parts = [];
-  let remaining = tekst;
+  let remaining = value;
 
   secties.forEach((sectie, i) => {
     const idx = remaining.indexOf(sectie);
@@ -328,98 +464,120 @@ function formatOnderbouwing(tekst) {
       const pos = remaining.indexOf(s, idx + sectie.length);
       return pos !== -1 && (acc === -1 || pos < acc) ? pos : acc;
     }, -1);
-    const content = nextIdx !== -1
-      ? remaining.slice(idx + sectie.length, nextIdx).trim()
-      : remaining.slice(idx + sectie.length).trim();
+    const content = nextIdx !== -1 ? remaining.slice(idx + sectie.length, nextIdx).trim() : remaining.slice(idx + sectie.length).trim();
     parts.push(`<div class="rapport-sectie"><h4>${sectie}</h4><p>${escHtml(content)}</p></div>`);
     remaining = nextIdx !== -1 ? remaining.slice(nextIdx) : "";
   });
 
-  return parts.join("") || `<p>${escHtml(tekst)}</p>`;
+  return parts.join("") || `<p>${escHtml(value || "Geen onderbouwing beschikbaar.")}</p>`;
 }
 
-function renderToegang(data) {
-  const el = document.getElementById("toegankelijkheid-content");
-  if (!el) return;
-  const rows = [];
+function buildPrintableReportHtml(data) {
+  const summary = getDecisionSummary(data);
+  const b1 = data.b1 || data.taal_b1 || {};
+  const bev = data.bevoegdheid || {};
+  return `
+    <div class="print-document">
+      <h1>Kwaliteitstoets raadsvoorstel</h1>
+      <p>Datum analyse: ${escHtml(new Date().toLocaleString("nl-NL"))}</p>
+      <p>Gemeente: ${escHtml(data.gemeente && data.gemeente !== "Onbekend" ? data.gemeente : "Onbekend")}</p>
 
-  const tc = data.titelcheck;
-  if (tc && tc.oordeel) {
-    const cls = tc.oordeel === "Duidelijk" ? "ok" : tc.oordeel === "Matig" ? "warn" : "err";
-    const suggestie = tc.suggestie ? `<div class="toeg-toelichting">${escHtml(tc.suggestie)}</div>` : "";
-    rows.push(`<div class="toeg-row">
-      <div class="toeg-label">Titel</div>
-      <div class="toeg-val ${cls}">${escHtml(tc.oordeel)}${suggestie}</div>
-    </div>`);
-  }
+      <h2>Oordeel</h2>
+      <p>Score: ${escHtml(summary.score)}</p>
+      <p>Oordeel: ${escHtml(summary.label)}</p>
+      ${summary.vertrouwen ? `<p>Analysebetrouwbaarheid: ${summary.vertrouwen}%</p>` : ""}
 
-  const lb = data.leesbaarheid;
-  if (lb && lb.zelfstandig_leesbaar) {
-    const oordeel = lb.zelfstandig_leesbaar;
-    const cls = oordeel === "Zelfstandig leesbaar" ? "ok" : oordeel === "Beperkt zelfstandig" ? "warn" : "err";
-    const zonderBijlagen = String(lb.zonder_bijlagen || "").toLowerCase();
-    const bijlagen = zonderBijlagen === "nee"
-      ? `<div class="toeg-toelichting">Kern staat deels alleen in bijlagen</div>`
-      : "";
-    rows.push(`<div class="toeg-row">
-      <div class="toeg-label">Leesbaarheid</div>
-      <div class="toeg-val ${cls}">${escHtml(oordeel)}${bijlagen}</div>
-    </div>`);
-  }
+      <h2>Kern van het voorstel</h2>
+      <p>${escHtml(data.kern || "Geen kernsamenvatting beschikbaar.")}</p>
 
-  const b1 = data.b1 || data.taal_b1;
-  if (b1 && b1.oordeel) {
-    const cls = ["Goed", "B1-conform"].includes(b1.oordeel) ? "ok" : b1.oordeel === "Matig" ? "warn" : "err";
-    const toelichting = b1.toelichting || (Array.isArray(b1.voorbeelden) ? b1.voorbeelden.slice(0, 2).join(" ") : "");
-    const toel = toelichting ? `<div class="toeg-toelichting">${escHtml(toelichting)}</div>` : "";
-    rows.push(`<div class="toeg-row">
-      <div class="toeg-label">Taal B1</div>
-      <div class="toeg-val ${cls}">${escHtml(b1.oordeel)}${toel}</div>
-    </div>`);
-  }
+      <h2>Beslispunten</h2>
+      <ol>${safeArray(data.beslispunten).map((punt) => `<li>${escHtml(punt)}</li>`).join("") || "<li>Geen beslispunten herkend.</li>"}</ol>
 
-  el.innerHTML = rows.length
-    ? rows.join("")
-    : `<p class="toeg-leeg">Geen toegankelijkheidsdata beschikbaar.</p>`;
+      <h2>Bevindingen</h2>
+      ${safeArray(data.bevindingen).length ? safeArray(data.bevindingen).map((b) => `
+        <section>
+          <h3>${escHtml(labelForSeverity(b))} - ${escHtml(b.rubriek || "Algemeen")}</h3>
+          <p><strong>Bevinding:</strong> ${escHtml(b.bevinding || "")}</p>
+          ${b.bewijs ? `<p><strong>Bewijs:</strong> ${escHtml(b.bewijs)}</p>` : ""}
+          ${b.herstelactie ? `<p><strong>Herstelactie:</strong> ${escHtml(b.herstelactie)}</p>` : ""}
+          ${typeof b.herstelbaar_voor_behandeling === "boolean" ? `<p><strong>Herstelbaar vóór behandeling:</strong> ${b.herstelbaar_voor_behandeling ? "Ja" : "Nee"}</p>` : ""}
+        </section>
+      `).join("") : "<p>Geen bevestigde bevindingen gevonden.</p>"}
+
+      <h2>Bevoegdheid</h2>
+      <p>Oordeel: ${escHtml(bev.oordeel || "Onbekend")}</p>
+      <p>Toelichting: ${escHtml(bev.toelichting || "Geen toelichting beschikbaar.")}</p>
+      ${bev.grondslag ? `<p>Grondslag: ${escHtml(bev.grondslag)}</p>` : ""}
+
+      <h2>Toegankelijkheid</h2>
+      <p>Titel: ${escHtml(data.titelcheck?.oordeel || "Niet beoordeeld")}</p>
+      <p>Leesbaarheid: ${escHtml(data.leesbaarheid?.zelfstandig_leesbaar || "Niet beoordeeld")}</p>
+      <p>Taal B1: ${escHtml(b1.oordeel || "Niet beoordeeld")}</p>
+
+      <h2>Onderbouwing</h2>
+      <div>${formatOnderbouwing(data.onderbouwing || "")}</div>
+    </div>
+  `;
 }
 
-function renderReportActions() {
-  const actions = document.getElementById("report-actions");
-  if (!actions) return;
-  actions.classList.toggle("hidden", !window.lastResult);
+function exportPdf() {
+  if (!window.lastResult || !printReport) return;
+  printReport.innerHTML = buildPrintableReportHtml(window.lastResult);
+  window.print();
 }
 
 function buildPlainTextReport(data) {
-  const title = data.kern || data.beslispunten?.[0] || "Raadsvoorstel";
-  const score = data.score?.totaal ?? "-";
+  const summary = getDecisionSummary(data);
+  const b1 = data.b1 || data.taal_b1 || {};
   const lines = [
-    title,
+    "Kwaliteitstoets raadsvoorstel",
+    `Datum analyse: ${new Date().toLocaleString("nl-NL")}`,
+    data.gemeente && data.gemeente !== "Onbekend" ? `Gemeente: ${data.gemeente}` : "",
     "",
-    `Score: ${score} - ${data.score_label || ""}`.trim(),
-    data.vertrouwen ? `Analysebetrouwbaarheid: ${data.vertrouwen}%` : "",
+    `Score: ${summary.score}`,
+    `Oordeel: ${summary.label}`,
+    summary.vertrouwen ? `Analysebetrouwbaarheid: ${summary.vertrouwen}%` : "",
     "",
-    "Bevindingen"
-  ].filter(Boolean);
+    "Kern van het voorstel",
+    data.kern || "Geen kernsamenvatting beschikbaar.",
+    "",
+    "Beslispunten",
+    ...safeArray(data.beslispunten).map((punt, index) => `${index + 1}. ${punt}`),
+    "",
+    "Bevindingen",
+  ].filter((line) => line !== "");
 
-  const bevindingen = data.bevindingen || [];
-  if (!bevindingen.length) {
-    lines.push("- Geen bevestigde bevindingen.");
+  if (!safeArray(data.bevindingen).length) {
+    lines.push("- Geen bevestigde bevindingen gevonden.");
   } else {
-    bevindingen.forEach((b, index) => {
-      lines.push(`${index + 1}. ${b.ernst || "AANDACHT"} - ${b.bevinding || ""}`);
+    safeArray(data.bevindingen).forEach((b, index) => {
+      lines.push(`${index + 1}. ${labelForSeverity(b)} - ${b.bevinding || ""}`);
+      if (b.rubriek) lines.push(`   Rubriek: ${b.rubriek}`);
       if (b.bewijs) lines.push(`   Bewijs: ${b.bewijs}`);
       if (b.herstelactie) lines.push(`   Herstelactie: ${b.herstelactie}`);
-      if (typeof b.herstelbaar_voor_behandeling === "boolean") {
-        lines.push(`   Herstelbaar: ${b.herstelbaar_voor_behandeling ? "ja, vóór behandeling" : "nee, vereist nader traject"}`);
-      }
+      if (typeof b.herstelbaar_voor_behandeling === "boolean") lines.push(`   Herstelbaar vóór behandeling: ${b.herstelbaar_voor_behandeling ? "ja" : "nee"}`);
     });
   }
 
-  lines.push("", "Indicatieve checks");
-  const b1 = data.b1 || data.taal_b1;
-  lines.push(`- Taal B1: ${b1?.oordeel || "niet beoordeeld"}`);
-
+  const bev = data.bevoegdheid || {};
+  lines.push("", "Bevoegdheid", `Oordeel: ${bev.oordeel || "Onbekend"}`, `Toelichting: ${bev.toelichting || "Geen toelichting beschikbaar."}`);
+  if (bev.grondslag) lines.push(`Grondslag: ${bev.grondslag}`);
+  lines.push("", "Toegankelijkheid", `Titel: ${data.titelcheck?.oordeel || "Niet beoordeeld"}`, `Leesbaarheid: ${data.leesbaarheid?.zelfstandig_leesbaar || "Niet beoordeeld"}`, `Taal B1: ${b1.oordeel || "Niet beoordeeld"}`);
+  lines.push("", "Onderbouwing", stripHtml(formatOnderbouwing(data.onderbouwing || "")));
   return lines.join("\n");
+}
+
+async function copyCurrentReport() {
+  if (!window.lastResult) return;
+  try {
+    await copyTextToClipboard(buildPlainTextReport(window.lastResult));
+    if (copyFeedback) {
+      copyFeedback.textContent = "Gekopieerd ✓";
+      setTimeout(() => { copyFeedback.textContent = ""; }, 2000);
+    }
+  } catch (err) {
+    if (copyFeedback) copyFeedback.textContent = "Kopiëren mislukt";
+  }
 }
 
 async function copyTextToClipboard(text) {
@@ -445,26 +603,77 @@ async function copyTextToClipboard(text) {
   if (!ok) throw new Error("Clipboard niet beschikbaar.");
 }
 
-function resetResultScrollPositions() {
-  [
-    "#beslispunten-list",
-    "#bevoegdheid-content",
-    "#verbeter-list",
-    ".rapport-scroll"
-  ].forEach(selector => {
-    document.querySelector(selector)?.scrollTo({ top: 0, left: 0 });
-  });
+function renderGemeente(data) {
+  const heeftGemeente = data.gemeente && data.gemeente !== "Onbekend";
+  const badge = document.getElementById("gemeente-badge");
+  const info = document.getElementById("voorstel-info");
+  if (heeftGemeente) {
+    document.getElementById("gemeente-naam").textContent = data.gemeente;
+    badge?.classList.remove("hidden");
+    info?.classList.remove("hidden");
+  } else {
+    badge?.classList.add("hidden");
+    info?.classList.add("hidden");
+  }
+}
+
+function renderReportActions() {
+  const actions = document.getElementById("report-actions");
+  if (!actions) return;
+  actions.classList.toggle("hidden", !window.lastResult);
+}
+
+function getDecisionWarnings(data) {
+  return safeArray(data.beslispunten_check).filter((check) => check && check.onderbouwd === false);
+}
+
+function normalizeScoreLabel(label, score) {
+  if (label === "Verbeterd voor behandeling") return "Verbeteren vóór behandeling";
+  if (label) return label;
+  if (score >= 85) return "Besluitrijp";
+  if (score >= 65) return "Lichte verbeterpunten";
+  if (score >= 50) return "Verbeteren vóór behandeling";
+  return "Niet besluitrijp";
+}
+
+function normalizeErnst(item) {
+  return String(item?.ernst || "AANDACHT").toUpperCase();
+}
+
+function labelForSeverity(item) {
+  const ernst = normalizeErnst(item);
+  if (ernst === "BLOKKEREND") return "Blokkerende bevinding";
+  if (ernst === "OPTIONEEL") return "Optioneel";
+  return "Aandachtspunt";
+}
+
+function severityRank(item) {
+  const ernst = normalizeErnst(item);
+  if (ernst === "BLOKKEREND") return 3;
+  if (ernst === "AANDACHT") return 2;
+  return 1;
+}
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
 }
 
 function normalizeText(value) {
   return String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function stripHtml(value) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = value;
+  return tmp.textContent || tmp.innerText || "";
+}
+
 function escHtml(str) {
-  return String(str)
+  return String(str ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
     .replace(/\n/g, "<br>");
 }
 
