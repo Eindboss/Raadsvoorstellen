@@ -10,16 +10,18 @@ const statusError = document.getElementById("status-error");
 const errorMessage = document.getElementById("error-message");
 const emptyState = document.getElementById("empty-state");
 const resultGrid = document.getElementById("result-grid");
+const copyReportBtn = document.getElementById("copy-report-btn");
+const copyFeedback = document.getElementById("copy-feedback");
 
 let mode = "pdf";
 
 // ── Scan animatie ──────────────────────────────────────────
 const SCAN_STEPS = [
-  { label: "Document inladen",         duration: 2200 },
-  { label: "Tekst extraheren",         duration: 3500 },
-  { label: "Voorstel herkennen",       duration: 5500 },
-  { label: "Kwaliteitstoets uitvoeren",duration: 10000 },
-  { label: "Onderbouwing opstellen",   duration: null },  // wacht op response
+  { label: "Document inladen",                 duration: 2000 },
+  { label: "Tekst extraheren",                 duration: 3000 },
+  { label: "Voorstel classificeren",           duration: 4000 },
+  { label: "Kandidaten detecteren - Pass 1",   duration: 6000 },
+  { label: "Bevindingen valideren - Pass 2",   duration: null },  // wacht op response
 ];
 
 let scanTimers = [];
@@ -83,6 +85,19 @@ tabs.forEach(tab => {
   });
 });
 
+copyReportBtn?.addEventListener("click", async () => {
+  if (!window.lastResult) return;
+  try {
+    await copyTextToClipboard(buildPlainTextReport(window.lastResult));
+    if (copyFeedback) {
+      copyFeedback.textContent = "Gekopieerd ✓";
+      setTimeout(() => { copyFeedback.textContent = ""; }, 2000);
+    }
+  } catch (err) {
+    if (copyFeedback) copyFeedback.textContent = "Kopiëren mislukt";
+  }
+});
+
 submitBtn.addEventListener("click", async () => {
   setStatus("loading");
   submitBtn.disabled = true;
@@ -138,26 +153,16 @@ function setStatus(state, msg) {
 function renderResult(data) {
   window.lastResult = data;
 
-  // Beslispunten
-  document.getElementById("beslispunten-list").innerHTML =
-    (data.beslispunten || []).map(p => `<li>${escHtml(p)}</li>`).join("");
+  renderBeslispunten(data);
 
   // Kern
   document.getElementById("kern-text").textContent = data.kern || "";
 
   renderTitelcheck(data.titelcheck);
+  renderLeesbaarheid(data.leesbaarheid);
 
   // Bevestigde bevindingen
-  const bevindingen = data.bevindingen || [];
-  document.getElementById("verbeter-list").innerHTML = bevindingen.length
-    ? bevindingen.map(b => `
-      <li class="bevinding-item ${escClass(b.ernst)}">
-        <strong>${escHtml(b.ernst || "AANDACHT")} · ${escHtml(b.rubriek || "Algemeen")}</strong>
-        <span>${escHtml(b.bevinding || "")}</span>
-        ${b.bewijs ? `<small>Bewijs: ${escHtml(b.bewijs)}</small>` : ""}
-        ${b.herstelactie ? `<small>Herstel: ${escHtml(b.herstelactie)}</small>` : ""}
-      </li>`).join("")
-    : `<li class="bevinding-item geen">Geen bevestigde bevindingen.</li>`;
+  renderBevindingen(data);
 
   // Raadsvragen
   const vragen = data.verwachte_raadsvragen?.vragen || data.raadsvragen || [];
@@ -199,11 +204,71 @@ function renderResult(data) {
 
   renderScore(data.score);
   renderQualityIndicators(data);
+  renderReportActions();
 
   statusIdle.classList.add("hidden");
   emptyState.classList.add("hidden");
   resultGrid.classList.remove("hidden");
   resetResultScrollPositions();
+}
+
+function renderBeslispunten(data) {
+  const beslispunten = data.beslispunten || [];
+  const checks = data.beslispunten_check || [];
+  document.getElementById("beslispunten-list").innerHTML = beslispunten
+    .map((punt, index) => {
+      const check = findBeslispuntCheck(punt, checks, index);
+      const status = check && typeof check.onderbouwd === "boolean"
+        ? `<span class="decision-status ${check.onderbouwd ? "ok" : "warn"}">${check.onderbouwd ? "✓" : "⚠"}</span>`
+        : "";
+      const missing = check && check.onderbouwd === false && check.ontbrekende_onderbouwing
+        ? `<div class="decision-missing">${escHtml(check.ontbrekende_onderbouwing)}</div>`
+        : "";
+      return `<li>${status}<span class="decision-text">${escHtml(punt)}</span>${missing}</li>`;
+    })
+    .join("");
+}
+
+function findBeslispuntCheck(punt, checks, index) {
+  if (!Array.isArray(checks) || !checks.length) return null;
+  if (checks[index]) return checks[index];
+  const normalized = normalizeText(punt);
+  return checks.find(check => {
+    const candidate = normalizeText(check.beslispunt || "");
+    return candidate && (candidate.includes(normalized) || normalized.includes(candidate));
+  }) || null;
+}
+
+function renderBevindingen(data) {
+  const bevindingen = data.bevindingen || [];
+  const blokkerend = bevindingen.filter(b => String(b.ernst || "").toUpperCase() === "BLOKKEREND").length;
+  const banner = document.getElementById("blocking-banner");
+  if (banner) {
+    if (blokkerend) {
+      banner.textContent = `${blokkerend} blokkerende bevinding${blokkerend === 1 ? "" : "en"} - voorstel is niet besluitrijp`;
+      banner.classList.remove("hidden");
+    } else {
+      banner.classList.add("hidden");
+      banner.textContent = "";
+    }
+  }
+
+  document.getElementById("verbeter-list").innerHTML = bevindingen.length
+    ? bevindingen.map(b => `
+      <li class="bevinding-item ${escClass(b.ernst)}">
+        <strong>${escHtml(b.ernst || "AANDACHT")} · ${escHtml(b.rubriek || "Algemeen")}</strong>
+        ${renderRecoveryLabel(b)}
+        <span>${escHtml(b.bevinding || "")}</span>
+        ${b.bewijs ? `<small>Bewijs: ${escHtml(b.bewijs)}</small>` : ""}
+        ${b.herstelactie ? `<small>Herstel: ${escHtml(b.herstelactie)}</small>` : ""}
+      </li>`).join("")
+    : `<li class="bevinding-item geen">Geen bevestigde bevindingen.</li>`;
+}
+
+function renderRecoveryLabel(bevinding) {
+  if (typeof bevinding.herstelbaar_voor_behandeling !== "boolean") return "";
+  const herstelbaar = bevinding.herstelbaar_voor_behandeling;
+  return `<span class="recovery-label ${herstelbaar ? "green" : "red"}">${herstelbaar ? "Herstelbaar vóór behandeling" : "Vereist nader traject"}</span>`;
 }
 
 function renderScore(score) {
@@ -213,6 +278,7 @@ function renderScore(score) {
   const numEl = document.getElementById("score-number");
   const labelEl = document.getElementById("score-label");
   const trustEl = document.getElementById("trust-label");
+  const candidateEl = document.getElementById("candidate-label");
   const catsEl = document.getElementById("score-cats");
 
   const totaal = score.totaal || 0;
@@ -230,6 +296,13 @@ function renderScore(score) {
   if (trustEl) {
     const vertrouwen = window.lastResult?.vertrouwen;
     trustEl.textContent = Number.isFinite(vertrouwen) ? `Analysebetrouwbaarheid: ${vertrouwen}%` : "";
+  }
+  if (candidateEl) {
+    const verworpen = window.lastResult?.verworpen_kandidaten;
+    const bevindingen = window.lastResult?.bevindingen || [];
+    candidateEl.textContent = Number.isFinite(verworpen)
+      ? `${verworpen + bevindingen.length} kandidaten geanalyseerd · ${verworpen} verworpen na bewijscheck`
+      : "";
   }
 
   // Categorieën
@@ -286,6 +359,23 @@ function renderTitelcheck(titelcheck) {
   el.className = `titelcheck-line ${badgeClass(titelcheck.oordeel, ["Duidelijk"], ["Matig"])}`;
 }
 
+function renderLeesbaarheid(leesbaarheid) {
+  const el = document.getElementById("leesbaarheid-line");
+  if (!el) return;
+  if (!leesbaarheid || !leesbaarheid.zelfstandig_leesbaar) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+  const oordeel = leesbaarheid.zelfstandig_leesbaar;
+  const cls = badgeClass(oordeel, ["Zelfstandig leesbaar"], ["Beperkt zelfstandig"]);
+  const bijlagen = String(leesbaarheid.zonder_bijlagen || "").toLowerCase() === "nee"
+    ? `<span class="attachment-warning">Kern staat deels alleen in bijlagen</span>`
+    : "";
+  el.innerHTML = `<span class="readability-badge ${cls}">${escHtml(oordeel)}</span>${bijlagen}`;
+  el.className = "leesbaarheid-line";
+}
+
 function renderQualityIndicators(data) {
   window.lastResult = data;
   const el = document.getElementById("quality-badges");
@@ -295,6 +385,73 @@ function renderQualityIndicators(data) {
   if (data.wcag?.oordeel) badges.push({ label: "WCAG", value: `${data.wcag.oordeel} · indicatief`, cls: badgeClass(data.wcag.oordeel, ["Toegankelijk"], ["Aandachtspunten"]) });
   if (data.juridische_context_actief) badges.push({ label: "Juridisch", value: "referentie actief", cls: "neutral" });
   el.innerHTML = badges.map(b => `<div class="quality-badge ${b.cls}"><span>${escHtml(b.label)}</span>${escHtml(b.value)}</div>`).join("");
+}
+
+function renderReportActions() {
+  const actions = document.getElementById("report-actions");
+  if (!actions) return;
+  actions.classList.toggle("hidden", !window.lastResult);
+}
+
+function buildPlainTextReport(data) {
+  const title = data.kern || data.beslispunten?.[0] || "Raadsvoorstel";
+  const score = data.score?.totaal ?? "-";
+  const lines = [
+    title,
+    "",
+    `Score: ${score} - ${data.score_label || ""}`.trim(),
+    data.vertrouwen ? `Analysebetrouwbaarheid: ${data.vertrouwen}%` : "",
+    "",
+    "Bevindingen"
+  ].filter(Boolean);
+
+  const bevindingen = data.bevindingen || [];
+  if (!bevindingen.length) {
+    lines.push("- Geen bevestigde bevindingen.");
+  } else {
+    bevindingen.forEach((b, index) => {
+      lines.push(`${index + 1}. ${b.ernst || "AANDACHT"} - ${b.bevinding || ""}`);
+      if (b.bewijs) lines.push(`   Bewijs: ${b.bewijs}`);
+      if (b.herstelactie) lines.push(`   Herstelactie: ${b.herstelactie}`);
+      if (typeof b.herstelbaar_voor_behandeling === "boolean") {
+        lines.push(`   Herstelbaar: ${b.herstelbaar_voor_behandeling ? "ja, vóór behandeling" : "nee, vereist nader traject"}`);
+      }
+    });
+  }
+
+  const vragen = data.verwachte_raadsvragen?.vragen || data.raadsvragen || [];
+  lines.push("", "Verwachte raadsvragen");
+  if (vragen.length) vragen.forEach((vraag, index) => lines.push(`${index + 1}. ${vraag}`));
+  else lines.push("- Geen raadsvragen gegenereerd.");
+
+  lines.push("", "Indicatieve checks");
+  lines.push(`- Taal B1: ${data.taal_b1?.oordeel || "niet beoordeeld"}`);
+  lines.push(`- WCAG: ${data.wcag?.oordeel || "niet beoordeeld"}${data.wcag?.indicatief ? " (indicatief)" : ""}`);
+
+  return lines.join("\n");
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (err) {
+      // Fallback voor browseromgevingen die clipboard-permissie weigeren.
+    }
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  const ok = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  if (!ok) throw new Error("Clipboard niet beschikbaar.");
 }
 
 function badgeClass(value, greenValues, amberValues) {
@@ -313,6 +470,10 @@ function resetResultScrollPositions() {
   ].forEach(selector => {
     document.querySelector(selector)?.scrollTo({ top: 0, left: 0 });
   });
+}
+
+function normalizeText(value) {
+  return String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 function escHtml(str) {

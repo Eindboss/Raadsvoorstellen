@@ -1,0 +1,5 @@
+De JSON bevat velden die nog niet of maar deels zichtbaar zijn: `leesbaarheid`, `beslispunten_check`, `herstelbaar_voor_behandeling` per bevinding, `verworpen_kandidaten`, `advies`, `besluitrijpheid`, `kandidaten_count`, `pass2_fallback`, `gaps_gebruikt` en `wetsartikelen_gebruikt`. `taal_b1`, `wcag`, `titelcheck`, score, bevoegdheid, bevindingen en raadsvragen worden al gerenderd, maar compact.
+
+De zeven voorgestelde verbeteringen kloppen. De grootste winst zit in herstelbaarheid, beslispuntstatus en de blokkerend-banner: die maken de toets directer bruikbaar voor griffie en ambtenaar. Voor beslispunten kies ik geen tooltip als primaire vorm, maar een korte uitklapbare/zichtbare onderregel bij ontbrekende onderbouwing; dat werkt beter op mobiel en bij lange teksten.
+
+Wat verder opvalt: de sidebar heeft na een resultaat nog geen duidelijke actie naast opnieuw uploaden. Een kopieerknop daar is daarom logisch. De scananimatie moet inderdaad de tweefasige architectuur volgen, anders belooft de UI een oude workflow. Ik houd de nieuwe onderdelen compact, zodat de bestaande dashboardindeling niet zwaarder wordt.

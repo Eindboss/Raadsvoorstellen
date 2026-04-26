@@ -804,25 +804,84 @@ function buildOnderbouwing(bevindingen, advies) {
 
 function buildExpectedQuestions(bevindingen, typeGaps, legalArticles, beslispunten = []) {
   const questions = [];
+  const addQuestion = (question) => {
+    const cleaned = String(question || "").replace(/\s+/g, " ").trim();
+    if (!cleaned || questions.length >= 5) return;
+    if (!questions.includes(cleaned)) questions.push(cleaned);
+  };
+  const decisionSubject = describeDecisionSubject(beslispunten);
+
   for (const item of safeArray(bevindingen)) {
     if (questions.length >= 5) break;
-    const basis = (item.bevinding || "").replace(/\.$/, "");
-    if (basis) questions.push(`Hoe wordt "${basis}" opgelost voordat de raad hierover besluit?`);
+    addQuestion(questionForFinding(item, decisionSubject));
   }
   for (const beslispunt of safeArray(beslispunten)) {
     if (questions.length >= 5) break;
-    const short = String(beslispunt || "").trim().slice(0, 140);
-    if (short) questions.push(`Welke onderbouwing in de toelichting ondersteunt het beslispunt "${short}"?`);
+    const short = cleanDecisionText(beslispunt);
+    if (short) addQuestion(`Welke toelichting onderbouwt concreet dit beslispunt: ${short}?`);
   }
   for (const gap of safeArray(typeGaps)) {
     if (questions.length >= 5) break;
-    questions.push(`Waar in het voorstel is de informatie over ${gap.informatie_type} onderbouwd, en wat betekent dit voor het gevraagde besluit?`);
+    addQuestion(questionForGap(gap, decisionSubject));
   }
   for (const article of safeArray(legalArticles)) {
     if (questions.length >= 3) break;
-    questions.push(`Hoe verhoudt het gevraagde besluit zich tot ${article.wet} artikel ${article.artikel}?`);
+    addQuestion(`Welke wettelijke basis gebruikt het college voor dit besluit, en sluit die aan op ${article.wet} artikel ${article.artikel}?`);
   }
-  return [...new Set(questions)].slice(0, 5);
+  return questions;
+}
+
+function questionForFinding(item, decisionSubject) {
+  const text = `${item.rubriek || ""} ${item.bevinding || ""} ${item.bewijs || ""}`.toLowerCase();
+  const subject = decisionSubject || "dit voorstel";
+
+  if (/(beslispunt|onderbouwing)/.test(text)) {
+    return `Welke inhoudelijke onderbouwing hoort bij het gevraagde besluit over ${subject}, en waar staat die in de toelichting?`;
+  }
+  if (/(financi|dekking|krediet|begroting|kosten|bedrag|tegenvaller)/.test(text)) {
+    return `Welke financiële gevolgen, dekking en mogelijke tegenvallers horen bij ${subject}, en hoe zijn die in de begroting verwerkt?`;
+  }
+  if (/(uitvoering|planning|tijdspad|verantwoordelijk|voortgang|consistentie)/.test(text)) {
+    return `Wie is verantwoordelijk voor de uitvoering van ${subject}, welke stappen volgen en wanneer wordt de raad over voortgang geïnformeerd?`;
+  }
+  if (/(participatie|inspraak|bewoner|belanghebbend)/.test(text)) {
+    return `Welke belanghebbenden zijn betrokken bij ${subject}, wat was hun inbreng en wat is daarmee gedaan?`;
+  }
+  if (/(risico|beheersmaatregel|onzeker)/.test(text)) {
+    return `Welke belangrijkste risico's ziet het college bij ${subject}, en welke beheersmaatregelen zijn daarvoor voorzien?`;
+  }
+  if (/(juridisch|grondslag|bevoegd|rechtsgevolg|verordening)/.test(text)) {
+    return `Welke juridische grondslag en welk rechtsgevolg heeft het gevraagde besluit over ${subject}?`;
+  }
+  if (/(bijlage|leesbaar|zelfstandig|afkorting)/.test(text)) {
+    return `Welke kerninformatie over ${subject} staat nu alleen in bijlagen of vaktaal, en kan die in de toelichting worden samengevat?`;
+  }
+  return `Welk concreet risico voor de besluitvorming ontstaat bij ${subject}, en welke aanvulling krijgt de raad vóór behandeling?`;
+}
+
+function questionForGap(gap, decisionSubject) {
+  const type = String(gap.informatie_type || "").toLowerCase();
+  const subject = decisionSubject || "dit voorstel";
+  if (type.includes("financ")) return `Welke financiële effecten van ${subject} zijn structureel en welke zijn incidenteel?`;
+  if (type.includes("uitvoering")) return `Welke uitvoeringsstappen, verantwoordelijke partijen en rapportagemomenten horen bij ${subject}?`;
+  if (type.includes("risico")) return `Welke risico's kunnen het besluit over ${subject} financieel, juridisch of praktisch raken?`;
+  if (type.includes("participatie")) return `Hoe zijn inwoners of betrokken organisaties meegenomen bij ${subject}, en wat is zichtbaar met hun inbreng gedaan?`;
+  return `Welke informatie over ${gap.informatie_type} heeft de raad nog nodig om ${subject} verantwoord te beoordelen?`;
+}
+
+function describeDecisionSubject(beslispunten) {
+  const first = safeArray(beslispunten).map(cleanDecisionText).find(Boolean);
+  if (!first) return "";
+  return first.replace(/\.$/, "").slice(0, 130);
+}
+
+function cleanDecisionText(value) {
+  return String(value || "")
+    .replace(/^\s*(de raad\s+)?(besluit\s+)?(om\s+)?/i, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.;:]$/, "")
+    .slice(0, 160);
 }
 
 async function callOpenAI(text, dynamicMetadata = {}) {
@@ -1095,6 +1154,7 @@ module.exports = {
   classifyProposal,
   buildDynamicContext,
   buildLegalContext,
+  buildExpectedQuestions,
   calculateScore,
   calculateTrust
 };

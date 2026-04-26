@@ -71,9 +71,9 @@
           <div class="scan-steps" id="scan-steps">
             <div class="scan-step" data-step="0">Document inladen</div>
             <div class="scan-step" data-step="1">Tekst extraheren</div>
-            <div class="scan-step" data-step="2">Voorstel herkennen</div>
-            <div class="scan-step" data-step="3">Kwaliteitstoets uitvoeren</div>
-            <div class="scan-step" data-step="4">Onderbouwing opstellen</div>
+            <div class="scan-step" data-step="2">Voorstel classificeren</div>
+            <div class="scan-step" data-step="3">Kandidaten detecteren - Pass 1</div>
+            <div class="scan-step" data-step="4">Bevindingen valideren - Pass 2</div>
           </div>
         </div>
       </div>
@@ -97,8 +97,13 @@
         </div>
         <div class="score-label" id="score-label">Beoordeeld</div>
         <div class="trust-label" id="trust-label"></div>
+        <div class="candidate-label" id="candidate-label"></div>
         <div class="quality-badges" id="quality-badges"></div>
         <div class="score-cats" id="score-cats"></div>
+        <div class="report-actions hidden" id="report-actions">
+          <button id="copy-report-btn" class="btn-secondary" type="button">Kopieer rapport</button>
+          <span id="copy-feedback" class="copy-feedback"></span>
+        </div>
       </div>
 
       <div class="left-footer">
@@ -139,6 +144,7 @@
             <div class="card-label">Kern van het voorstel</div>
             <p id="kern-text"></p>
             <div id="titelcheck-line" class="titelcheck-line hidden"></div>
+            <div id="leesbaarheid-line" class="leesbaarheid-line hidden"></div>
           </div>
           <div class="kern-beslispunten">
             <div class="card-label">Beslispunten</div>
@@ -159,6 +165,7 @@
 
         <div class="dash-card card-verbeter">
           <div class="card-label">Verbeterpunten</div>
+          <div id="blocking-banner" class="blocking-banner hidden"></div>
           <ul id="verbeter-list"></ul>
         </div>
 
