@@ -728,7 +728,7 @@ function fallbackBevindingen(kandidaten) {
 function candidateHasConcreteSignal(kand) {
   const text = `${kand.rubriek || ""} ${kand.bevinding || ""} ${kand.reden || ""}`.toLowerCase();
   if (/(taal|wcag|titel|naamgeving)/.test(String(kand.rubriek || "").toLowerCase())) return false;
-  return /(ontbreekt|mist|geen|niet beschreven|niet onderbouwd|onduidelijk|zonder|paragraaf|beslispunt|dekking|risico|planning|uitvoering|participatie|juridisch|financi)/.test(text);
+  return /(ontbreekt|mist|geen|niet beschreven|niet onderbouwd|onduidelijk|zonder|paragraaf|beslispunt|dekking|risico|planning|uitvoering|participatie|juridisch|financi|argument|afweging|alternatief)/.test(text);
 }
 
 function herstelactieVoorKandidaat(kand) {
@@ -799,6 +799,20 @@ function buildOnderbouwing(bevindingen, advies) {
   return `Aandachtspunten\n${aandacht}\n\nRisico's\n${risico}\n\nAdvies\n${advies}`;
 }
 
+function buildArgumentatieSummary(bevindingen) {
+  const items = safeArray(bevindingen).filter(item => /argument/i.test(String(item.rubriek || "")));
+  if (!items.length) {
+    return {
+      oordeel: "Geen afzonderlijke aandachtspunten",
+      toelichting: "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden."
+    };
+  }
+  return {
+    oordeel: items.some(item => item.ernst === "BLOKKEREND") ? "Blokkerend aandachtspunt" : "Aandachtspunten gevonden",
+    toelichting: "Een of meer bevindingen raken de lijn probleem, keuze en besluit. Zie de argumentatiebevindingen voor bewijs en herstelactie."
+  };
+}
+
 async function callOpenAI(text, dynamicMetadata = {}) {
   dynamicMetadata = {
     hoofdType: "overig",
@@ -844,6 +858,8 @@ Beoordeel of de redenering in de toelichting aansluit op de beslispunten:
 Formuleer alleen een bevinding als er een concrete zwakte zichtbaar is.
 Aantoonbare afwezigheid van argumentatie is een bevinding; dunne of
 compacte toelichting bij een eenvoudig besluit is dat niet.
+Beoordeel niet of de beleidskeuze politiek wenselijk is. Beoordeel alleen of
+de redenering formeel en logisch genoeg is om het gevraagde besluit te dragen.
 
 Beoordeel ook indicatief:
 - Taalniveau B1: B1-conform, Matig of Complex, met maximaal 3 voorbeeldzinnen.
@@ -872,6 +888,7 @@ Geef geldig JSON in dit formaat:
   "titelcheck": { "oordeel": "Duidelijk | Matig | Onduidelijk", "suggestie": "" },
   "taal_b1": { "oordeel": "B1-conform | Matig | Complex", "voorbeelden": ["zin"] },
   "wcag": { "indicatief": true, "oordeel": "Toegankelijk | Aandachtspunten | Ontoegankelijk", "aandachtspunten": ["punt"] },
+  "argumentatie": { "oordeel": "Geen afzonderlijke aandachtspunten | Aandachtspunten gevonden", "toelichting": "Korte toelichting op de argumentatielijn" },
   "kandidaten": [
     { "rubriek": "Financiele aspecten", "bevinding": "Kandidaat-bevinding", "reden": "Waarom dit mogelijk ontbreekt of onjuist is" }
   ]
@@ -966,6 +983,8 @@ ${validationText}`;
   const label = scoreLabel(scoreValue);
   const vertrouwen = calculateTrust(bevindingen, verworpenKandidaten);
   const advies = buildAdvice(bevindingen);
+  const argumentatieSummary = pass1.argumentatie || buildArgumentatieSummary(bevindingen);
+  const hasArgumentatieBevinding = bevindingen.some(item => /argument/i.test(String(item.rubriek || "")));
 
   return {
     gemeente: pass1.gemeente || "Onbekend",
@@ -979,7 +998,8 @@ ${validationText}`;
       onderdelen: {
         Besluitrijpheid: statusForScore(scoreValue),
         Bewijsvoering: vertrouwen >= 70 ? "groen" : vertrouwen >= 50 ? "oranje" : "rood",
-        Bevindingen: bevindingen.some(item => item.blokkerend) ? "rood" : bevindingen.length ? "oranje" : "groen"
+        Bevindingen: bevindingen.some(item => item.blokkerend) ? "rood" : bevindingen.length ? "oranje" : "groen",
+        Argumentatie: bevindingen.some(item => /argument/i.test(String(item.rubriek || "")) && item.blokkerend) ? "rood" : hasArgumentatieBevinding ? "oranje" : "groen"
       }
     },
     score_label: label,
@@ -993,6 +1013,7 @@ ${validationText}`;
     titelcheck: pass1.titelcheck || { oordeel: "Duidelijk", suggestie: "" },
     taal_b1: pass1.taal_b1 || { oordeel: "Matig", voorbeelden: [] },
     wcag: { indicatief: true, ...(pass1.wcag || { oordeel: "Toegankelijk", aandachtspunten: [] }) },
+    argumentatie: argumentatieSummary,
     bevindingen,
     verworpen_kandidaten: verworpenKandidaten,
     vertrouwen,

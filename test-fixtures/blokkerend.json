@@ -1,0 +1,41 @@
+{
+  "gemeente": "Ridderkerk",
+  "score": {
+    "totaal": 43,
+    "onderdelen": {
+      "Besluitrijpheid": "rood",
+      "Bewijsvoering": "groen",
+      "Bevindingen": "rood",
+      "Argumentatie": "groen"
+    }
+  },
+  "score_label": "Niet besluitrijp",
+  "vertrouwen": 76,
+  "kern": "Het voorstel vraagt een krediet, maar de financiële dekking is onvoldoende onderbouwd.",
+  "beslispunten": ["Een krediet van 450.000 euro beschikbaar te stellen."],
+  "beslispunten_check": [{ "beslispunt": "Een krediet van 450.000 euro beschikbaar te stellen.", "onderbouwd": true }],
+  "bevoegdheid": { "oordeel": "ja", "toelichting": "De raad is bevoegd om krediet beschikbaar te stellen.", "grondslag": "Gemeentewet art. 189" },
+  "titelcheck": { "oordeel": "Duidelijk", "suggestie": "" },
+  "leesbaarheid": { "zelfstandig_leesbaar": "Beperkt zelfstandig", "voorbeelden": [], "zonder_bijlagen": "Ja" },
+  "b1": { "oordeel": "Matig", "toelichting": "Financiële termen vragen toelichting." },
+  "argumentatie": { "oordeel": "Geen afzonderlijke aandachtspunten", "toelichting": "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden." },
+  "bevindingen": [
+    {
+      "rubriek": "Financieel",
+      "ernst": "BLOKKEREND",
+      "bevinding": "De dekking van het krediet ontbreekt.",
+      "bewijs": "Het voorstel noemt 450.000 euro, maar geen dekkingsbron of begrotingspost.",
+      "herstelactie": "Voeg een dekkingsparagraaf toe met begrotingspost en effect op de vrije ruimte.",
+      "herstelbaar_voor_behandeling": false
+    }
+  ],
+  "onderbouwing": "Aandachtspunten\nBLOKKEREND: De dekking van het krediet ontbreekt.\nBewijs: Het voorstel noemt 450.000 euro, maar geen dekkingsbron of begrotingspost.\nHerstel: Voeg een dekkingsparagraaf toe met begrotingspost en effect op de vrije ruimte.\n\nRisico's\nEr zijn blokkerende bevindingen die de besluitrijpheid raken.\n\nAdvies\nLos eerst de financiële dekking op voordat het voorstel wordt geagendeerd.",
+  "hoofd_type": "financien-penc",
+  "dynamische_context_actief": true,
+  "juridische_context_actief": true,
+  "gaps_gebruikt": ["financieel"],
+  "wetsartikelen_gebruikt": ["Gemeentewet art. 189"],
+  "kandidaten_count": 4,
+  "verworpen_kandidaten": 3,
+  "pass2_fallback": false
+}

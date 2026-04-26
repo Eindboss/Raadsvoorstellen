@@ -1,0 +1,57 @@
+{
+  "gemeente": "Ridderkerk",
+  "score": {
+    "totaal": 92,
+    "onderdelen": {
+      "Besluitrijpheid": "groen",
+      "Bewijsvoering": "groen",
+      "Bevindingen": "groen",
+      "Argumentatie": "groen"
+    }
+  },
+  "score_label": "Besluitrijp",
+  "vertrouwen": 84,
+  "kern": "Het voorstel is helder opgebouwd en bevat voldoende informatie om het besluit te nemen.",
+  "beslispunten": [
+    "Het voorstel vast te stellen."
+  ],
+  "beslispunten_check": [
+    {
+      "beslispunt": "Het voorstel vast te stellen.",
+      "onderbouwd": true
+    }
+  ],
+  "bevoegdheid": {
+    "oordeel": "ja",
+    "toelichting": "De raad is bevoegd om dit besluit te nemen.",
+    "grondslag": "Gemeentewet"
+  },
+  "titelcheck": {
+    "oordeel": "Duidelijk",
+    "suggestie": ""
+  },
+  "leesbaarheid": {
+    "zelfstandig_leesbaar": "Zelfstandig leesbaar",
+    "voorbeelden": [],
+    "zonder_bijlagen": "Ja",
+    "zonder_bijlagen_toelichting": ""
+  },
+  "b1": {
+    "oordeel": "Goed",
+    "toelichting": "De tekst is compact en begrijpelijk."
+  },
+  "argumentatie": {
+    "oordeel": "Geen afzonderlijke aandachtspunten",
+    "toelichting": "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden."
+  },
+  "bevindingen": [],
+  "onderbouwing": "Aandachtspunten\nGeen bevestigde aandachtspunten.\n\nRisico's\nEr zijn geen blokkerende bevindingen bevestigd.\n\nAdvies\nGeen herstelactie nodig.",
+  "hoofd_type": "beleid-kaderstelling",
+  "dynamische_context_actief": true,
+  "juridische_context_actief": true,
+  "gaps_gebruikt": ["uitvoering"],
+  "wetsartikelen_gebruikt": ["Gemeentewet art. 108"],
+  "kandidaten_count": 2,
+  "verworpen_kandidaten": 2,
+  "pass2_fallback": false
+}

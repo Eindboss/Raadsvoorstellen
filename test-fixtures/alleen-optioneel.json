@@ -1,0 +1,57 @@
+{
+  "gemeente": "Ridderkerk",
+  "score": {
+    "totaal": 91,
+    "onderdelen": {
+      "Besluitrijpheid": "groen",
+      "Bewijsvoering": "groen",
+      "Bevindingen": "oranje",
+      "Argumentatie": "groen"
+    }
+  },
+  "score_label": "Besluitrijp",
+  "vertrouwen": 80,
+  "kern": "Het voorstel is besluitrijp, met enkele kleine redactionele optimalisaties.",
+  "beslispunten": ["Het voorstel vast te stellen."],
+  "beslispunten_check": [{ "beslispunt": "Het voorstel vast te stellen.", "onderbouwd": true }],
+  "bevoegdheid": { "oordeel": "ja", "toelichting": "De raad is bevoegd.", "grondslag": "Gemeentewet" },
+  "titelcheck": { "oordeel": "Duidelijk", "suggestie": "" },
+  "leesbaarheid": { "zelfstandig_leesbaar": "Zelfstandig leesbaar", "voorbeelden": [], "zonder_bijlagen": "Ja" },
+  "b1": { "oordeel": "Goed", "toelichting": "Begrijpelijk geformuleerd." },
+  "argumentatie": { "oordeel": "Geen afzonderlijke aandachtspunten", "toelichting": "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden." },
+  "bevindingen": [
+    {
+      "rubriek": "Leesbaarheid",
+      "ernst": "OPTIONEEL",
+      "bevinding": "Een lange zin kan eenvoudiger worden geformuleerd.",
+      "bewijs": "De toelichting bevat een lange samengestelde zin.",
+      "herstelactie": "Splits de zin in twee korte zinnen.",
+      "herstelbaar_voor_behandeling": true
+    },
+    {
+      "rubriek": "Bijlagen",
+      "ernst": "OPTIONEEL",
+      "bevinding": "De naam van een bijlage kan specifieker.",
+      "bewijs": "De bijlage heet alleen 'Bijlage A'.",
+      "herstelactie": "Geef de bijlage een beschrijvende titel.",
+      "herstelbaar_voor_behandeling": true
+    },
+    {
+      "rubriek": "Titel",
+      "ernst": "OPTIONEEL",
+      "bevinding": "De titel kan compacter.",
+      "bewijs": "De titel bevat herhaling.",
+      "herstelactie": "Verkort de titel zonder het besluit te veranderen.",
+      "herstelbaar_voor_behandeling": true
+    }
+  ],
+  "onderbouwing": "Aandachtspunten\nOPTIONEEL: Kleine optimalisaties.\n\nRisico's\nEr zijn geen blokkerende bevindingen bevestigd.\n\nAdvies\nVerwerk alleen de redactionele optimalisaties als daar tijd voor is.",
+  "hoofd_type": "beleid-kaderstelling",
+  "dynamische_context_actief": true,
+  "juridische_context_actief": true,
+  "gaps_gebruikt": [],
+  "wetsartikelen_gebruikt": [],
+  "kandidaten_count": 3,
+  "verworpen_kandidaten": 0,
+  "pass2_fallback": false
+}

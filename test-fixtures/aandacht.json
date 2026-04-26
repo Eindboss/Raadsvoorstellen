@@ -1,0 +1,47 @@
+{
+  "gemeente": "Ridderkerk",
+  "score": {
+    "totaal": 68,
+    "onderdelen": {
+      "Besluitrijpheid": "oranje",
+      "Bewijsvoering": "groen",
+      "Bevindingen": "oranje",
+      "Argumentatie": "groen"
+    }
+  },
+  "score_label": "Lichte verbeterpunten",
+  "vertrouwen": 78,
+  "kern": "Het voorstel is in hoofdlijn bruikbaar, maar vraagt aanvulling op uitvoering.",
+  "beslispunten": ["De verordening vast te stellen."],
+  "beslispunten_check": [
+    {
+      "beslispunt": "De verordening vast te stellen.",
+      "onderbouwd": false,
+      "ontbrekende_onderbouwing": "De toelichting onderbouwt onvoldoende waarom vaststelling nu nodig is."
+    }
+  ],
+  "bevoegdheid": { "oordeel": "ja", "toelichting": "De raad is bevoegd.", "grondslag": "Gemeentewet art. 147" },
+  "titelcheck": { "oordeel": "Duidelijk", "suggestie": "" },
+  "leesbaarheid": { "zelfstandig_leesbaar": "Beperkt zelfstandig", "voorbeelden": ["Enkele begrippen vragen uitleg."], "zonder_bijlagen": "Ja" },
+  "b1": { "oordeel": "Matig", "toelichting": "Enkele bestuurlijke begrippen zijn niet toegelicht." },
+  "argumentatie": { "oordeel": "Geen afzonderlijke aandachtspunten", "toelichting": "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden." },
+  "bevindingen": [
+    {
+      "rubriek": "Beslispunten",
+      "ernst": "AANDACHT",
+      "bevinding": "De onderbouwing van het beslispunt is te summier.",
+      "bewijs": "De toelichting noemt de verordening maar licht de noodzaak beperkt toe.",
+      "herstelactie": "Voeg een korte paragraaf toe met doel, noodzaak en effect van vaststelling.",
+      "herstelbaar_voor_behandeling": true
+    }
+  ],
+  "onderbouwing": "Aandachtspunten\nAANDACHT: De onderbouwing van het beslispunt is te summier.\nBewijs: De toelichting noemt de verordening maar licht de noodzaak beperkt toe.\nHerstel: Voeg een korte paragraaf toe met doel, noodzaak en effect van vaststelling.\n\nRisico's\nEr zijn geen blokkerende bevindingen bevestigd.\n\nAdvies\nVul de onderbouwing van het beslispunt aan voordat het voorstel wordt aangeboden.",
+  "hoofd_type": "regelgeving",
+  "dynamische_context_actief": true,
+  "juridische_context_actief": true,
+  "gaps_gebruikt": ["uitvoering"],
+  "wetsartikelen_gebruikt": ["Gemeentewet art. 147"],
+  "kandidaten_count": 3,
+  "verworpen_kandidaten": 2,
+  "pass2_fallback": false
+}

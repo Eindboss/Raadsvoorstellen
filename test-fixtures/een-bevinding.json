@@ -1,0 +1,27 @@
+{
+  "gemeente": "Ridderkerk",
+  "score": {
+    "totaal": 76,
+    "onderdelen": {
+      "Besluitrijpheid": "oranje",
+      "Argumentatie": "groen"
+    }
+  },
+  "score_label": "Lichte verbeterpunten",
+  "vertrouwen": 74,
+  "kern": "Het voorstel is vrijwel compleet, met één herstelbaar aandachtspunt.",
+  "beslispunten": ["Het voorstel vast te stellen."],
+  "beslispunten_check": [{ "beslispunt": "Het voorstel vast te stellen.", "onderbouwd": true }],
+  "bevoegdheid": { "oordeel": "ja", "toelichting": "De raad is bevoegd.", "grondslag": "Gemeentewet" },
+  "bevindingen": [
+    {
+      "rubriek": "Uitvoering",
+      "ernst": "AANDACHT",
+      "bevinding": "De verantwoordelijke uitvoerende partij is niet genoemd.",
+      "bewijs": "De tekst beschrijft de uitvoering, maar noemt geen eigenaar.",
+      "herstelactie": "Benoem wie verantwoordelijk is voor de uitvoering.",
+      "herstelbaar_voor_behandeling": true
+    }
+  ],
+  "onderbouwing": "Aandachtspunten\nAANDACHT: De verantwoordelijke uitvoerende partij is niet genoemd.\n\nRisico's\nGeen blokkerende bevinding bevestigd.\n\nAdvies\nBenoem de uitvoeringsverantwoordelijke."
+}

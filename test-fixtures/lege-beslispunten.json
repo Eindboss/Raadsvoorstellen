@@ -1,0 +1,27 @@
+{
+  "gemeente": "Ridderkerk",
+  "score": {
+    "totaal": 70,
+    "onderdelen": {
+      "Besluitrijpheid": "oranje",
+      "Argumentatie": "groen"
+    }
+  },
+  "score_label": "Lichte verbeterpunten",
+  "vertrouwen": 68,
+  "kern": "Het voorstel bevat geen herkenbare beslispunten.",
+  "beslispunten": [],
+  "beslispunten_check": [],
+  "bevoegdheid": { "oordeel": "onduidelijk", "toelichting": "Geen beslispunten herkend.", "grondslag": "" },
+  "bevindingen": [
+    {
+      "rubriek": "Beslispunten",
+      "ernst": "AANDACHT",
+      "bevinding": "Er zijn geen expliciete beslispunten herkend.",
+      "bewijs": "De tekst bevat geen duidelijke lijst met besluiten.",
+      "herstelactie": "Voeg expliciete beslispunten toe.",
+      "herstelbaar_voor_behandeling": true
+    }
+  ],
+  "onderbouwing": "Aandachtspunten\nAANDACHT: Er zijn geen expliciete beslispunten herkend.\n\nRisico's\nGeen blokkerende bevinding bevestigd.\n\nAdvies\nVoeg expliciete beslispunten toe."
+}

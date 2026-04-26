@@ -159,7 +159,8 @@ function renderResult(data) {
 function renderBasisView(data) {
   if (!basisView) return;
   const summary = getDecisionSummary(data);
-  const topFindings = getTopFindings(data, 3);
+  const findingPresentation = getFindingPresentation(data);
+  const topFindings = findingPresentation.findings;
   const totalFindings = safeArray(data.bevindingen).length;
   const remainingFindings = Math.max(0, totalFindings - topFindings.length);
   const decisions = safeArray(data.beslispunten);
@@ -194,9 +195,10 @@ function renderBasisView(data) {
 
       <section class="basis-section">
         <div class="section-title-row">
-          <h3>Belangrijkste herstelacties</h3>
-          <span>${topFindings.length ? `Top ${topFindings.length}` : "Geen bevestigde bevindingen"}</span>
+          <h3>${escHtml(findingPresentation.title)}</h3>
+          <span>${escHtml(findingPresentation.label)}</span>
         </div>
+        ${findingPresentation.intro ? `<p class="basis-section-intro">${escHtml(findingPresentation.intro)}</p>` : ""}
         ${topFindings.length ? renderFindingSummaryList(topFindings) : `
           <p class="empty-note">Geen bevestigde bevindingen gevonden. Controleer het voorstel altijd zelf voordat het wordt aangeboden.</p>
         `}
@@ -234,14 +236,16 @@ function renderDeepView(data) {
         <button class="detail-tab active" type="button" data-detail-tab="beslispunten">Beslispunten</button>
         <button class="detail-tab" type="button" data-detail-tab="juridisch">Juridisch</button>
         <button class="detail-tab" type="button" data-detail-tab="bevindingen">Bevindingen</button>
+        <button class="detail-tab" type="button" data-detail-tab="argumentatie">Argumentatie</button>
         <button class="detail-tab" type="button" data-detail-tab="toegankelijkheid">Toegankelijkheid</button>
         <button class="detail-tab" type="button" data-detail-tab="onderbouwing">Onderbouwing</button>
-        <button class="detail-tab" type="button" data-detail-tab="technisch">Technisch</button>
+        <button class="detail-tab" type="button" data-detail-tab="analyseproces">Analyseproces</button>
       </div>
 
       <section class="detail-section detail-panel active" data-detail-panel="beslispunten">
         <h3>Beslispunten</h3>
         <ol class="detail-list">${renderBeslispunten(data)}</ol>
+        ${renderDecisionSummaryNote(data)}
       </section>
 
       <section class="detail-section detail-panel" data-detail-panel="juridisch">
@@ -254,6 +258,11 @@ function renderDeepView(data) {
         ${renderBevindingen(data)}
       </section>
 
+      <section class="detail-section detail-panel" data-detail-panel="argumentatie">
+        <h3>Argumentatielijn</h3>
+        ${renderArgumentatie(data)}
+      </section>
+
       <section class="detail-section detail-panel" data-detail-panel="toegankelijkheid">
         <h3>Toegankelijkheid <span>indicatief</span></h3>
         ${renderToegang(data)}
@@ -261,12 +270,14 @@ function renderDeepView(data) {
 
       <section class="detail-section detail-panel" data-detail-panel="onderbouwing">
         <h3>Onderbouwing</h3>
-        <div class="rapport-scroll">${formatOnderbouwing(data.onderbouwing || "")}</div>
+        ${renderOnderbouwingCompact(data)}
       </section>
 
-      <section class="detail-section detail-panel technical-analysis" data-detail-panel="technisch">
+      <section class="detail-section detail-panel technical-analysis" data-detail-panel="analyseproces">
+        <h3>Hoe is deze analyse tot stand gekomen?</h3>
+        <p class="process-intro">Deze gegevens helpen om te controleren hoe de analyse tot stand kwam. Ze zijn vooral bedoeld voor controle en foutopsporing.</p>
         <details>
-          <summary>Technische analyse</summary>
+          <summary>Analysegegevens tonen</summary>
           ${renderTechnicalDetails(data)}
         </details>
       </section>
@@ -333,6 +344,48 @@ function getTopFindings(data, limit = 3) {
     .slice(0, limit);
 }
 
+function getFindingPresentation(data) {
+  const bevindingen = safeArray(data?.bevindingen);
+  const blockers = bevindingen.filter((item) => normalizeErnst(item) === "BLOKKEREND");
+  const attention = bevindingen.filter((item) => normalizeErnst(item) === "AANDACHT");
+  const optional = bevindingen.filter((item) => normalizeErnst(item) === "OPTIONEEL");
+
+  if (blockers.length) {
+    return {
+      title: "Eerst herstellen",
+      label: `Top ${Math.min(3, bevindingen.length)}`,
+      intro: "",
+      findings: getTopFindings(data, 3),
+    };
+  }
+
+  if (attention.length) {
+    const findings = [...attention, ...optional].slice(0, 3);
+    return {
+      title: "Belangrijkste herstelacties",
+      label: `Top ${findings.length}`,
+      intro: "",
+      findings,
+    };
+  }
+
+  if (optional.length) {
+    return {
+      title: "Kleine optimalisaties",
+      label: "Optioneel",
+      intro: "Geen blokkerende punten of noodzakelijke aandachtspunten gevonden.",
+      findings: optional.slice(0, 2),
+    };
+  }
+
+  return {
+    title: "Geen bevestigde bevindingen",
+    label: "Geen bevindingen",
+    intro: "",
+    findings: [],
+  };
+}
+
 function renderFindingSummaryList(findings) {
   return `<ul class="finding-summary-list">
     ${findings.map((item) => `
@@ -366,11 +419,18 @@ function renderBeslispunten(data) {
   return beslispunten.map((punt, index) => {
     const check = findBeslispuntCheck(punt, checks, index);
     const statusClass = check && typeof check.onderbouwd === "boolean" ? (check.onderbouwd ? "ok" : "warn") : "";
-    const missing = check?.onderbouwd === false && check.ontbrekende_onderbouwing
-      ? `<div class="decision-detail-warning">${escHtml(check.ontbrekende_onderbouwing)}</div>`
+    const signal = check?.onderbouwd === false
+      ? `<span class="decision-inline-warning">Onvoldoende onderbouwing</span>`
       : "";
-    return `<li>${statusClass ? `<span class="decision-status ${statusClass}" aria-hidden="true"></span>` : ""}<span>${escHtml(punt)}</span>${missing}</li>`;
+    return `<li>${statusClass ? `<span class="decision-status ${statusClass}" aria-hidden="true"></span>` : ""}<span>${escHtml(punt)}</span>${signal}</li>`;
   }).join("");
+}
+
+function renderDecisionSummaryNote(data) {
+  const warnings = getDecisionWarnings(data);
+  if (!warnings.length) return "";
+  const count = warnings.length;
+  return `<p class="decision-summary-note">${count} beslispunt${count === 1 ? "" : "en"} ${count === 1 ? "vraagt" : "vragen"} nadere onderbouwing. Zie tab Bevindingen voor bewijs en herstelacties.</p>`;
 }
 
 function findBeslispuntCheck(punt, checks, index) {
@@ -400,6 +460,27 @@ function renderBevindingen(data) {
       </li>
     `).join("")}
   </ul>`;
+}
+
+function renderArgumentatie(data) {
+  const argumentatie = data?.argumentatie || {};
+  const items = getArgumentatieFindings(data);
+  const oordeel = argumentatie.oordeel || (items.length ? "Aandachtspunten gevonden" : "Geen afzonderlijke aandachtspunten");
+  const toelichting = argumentatie.toelichting || (items.length
+    ? "Onderstaande bevindingen raken de lijn probleem, keuze en besluit."
+    : "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden.");
+
+  return `
+    <div class="argumentatie-summary">
+      <strong>${escHtml(oordeel)}</strong>
+      <p>${escHtml(toelichting)}</p>
+    </div>
+    ${items.length ? renderBevindingen({ bevindingen: items }) : ""}
+  `;
+}
+
+function getArgumentatieFindings(data) {
+  return safeArray(data?.bevindingen).filter((item) => /argument/i.test(String(item.rubriek || "")));
 }
 
 function renderRecoveryLabel(bevinding) {
@@ -457,16 +538,59 @@ function renderTechnicalDetails(data) {
   const gaps = safeArray(data.gaps_gebruikt);
   const articles = safeArray(data.wetsartikelen_gebruikt);
   const rows = [
-    ["Hoofdtype", data.hoofd_type || data.classificatie?.hoofdType || "Onbekend"],
-    ["Dynamische context", data.dynamische_context_actief ? "Actief" : "Niet actief"],
+    ["Voorsteltype", data.hoofd_type || data.classificatie?.hoofdType || "Onbekend"],
+    ["Extra context gebruikt", data.dynamische_context_actief ? "Ja" : "Nee"],
     ["Gaps gebruikt", gaps.length ? gaps.join(", ") : "Geen"],
-    ["Juridische context", data.juridische_context_actief ? "Actief" : "Niet actief"],
+    ["Juridische context gebruikt", data.juridische_context_actief ? "Ja" : "Nee"],
     ["Wetsartikelen", articles.length ? articles.join(", ") : "Geen"],
-    ["Kandidaten Pass 1", Number.isFinite(data.kandidaten_count) ? data.kandidaten_count : "Onbekend"],
-    ["Verworpen na bewijscheck", Number.isFinite(data.verworpen_kandidaten) ? data.verworpen_kandidaten : "Onbekend"],
-    ["Pass 2 fallback", data.pass2_fallback ? "Ja" : "Nee"],
+    ["Mogelijke bevindingen gevonden in eerste analyse", Number.isFinite(data.kandidaten_count) ? data.kandidaten_count : "Onbekend"],
+    ["Verworpen na bewijscheck", Number.isFinite(data.verworpen_kandidaten) ? `${data.verworpen_kandidaten} niet bevestigd na controle op tekstbewijs` : "Onbekend"],
+    ["Terugvalroute gebruikt", data.pass2_fallback ? "Ja" : "Nee"],
   ];
   return `<dl>${rows.map(([label, value]) => `<div><dt>${escHtml(label)}</dt><dd>${escHtml(value)}</dd></div>`).join("")}</dl>`;
+}
+
+function renderOnderbouwingCompact(data) {
+  const sections = extractOnderbouwingSections(data?.onderbouwing || "");
+  const advies = sections.advies || "Geen apart advies beschikbaar. Bekijk de volledige onderbouwing.";
+  return `
+    <div class="advies-block">
+      <h4>Advies</h4>
+      <p>${escHtml(advies)}</p>
+    </div>
+    <details class="onderbouwing-details">
+      <summary>Volledige onderbouwing tonen</summary>
+      <div class="rapport-scroll">${formatOnderbouwing(data?.onderbouwing || "")}</div>
+    </details>
+  `;
+}
+
+function extractOnderbouwingSections(text) {
+  const value = String(text || "");
+  return {
+    aandachtspunten: extractSection(value, "Aandachtspunten"),
+    risicos: extractSection(value, "Risico's"),
+    advies: extractSection(value, "Advies"),
+    volledig: value,
+  };
+}
+
+function extractSection(text, heading) {
+  const value = String(text || "");
+  const headings = ["Aandachtspunten", "Risico's", "Advies"];
+  const start = value.search(new RegExp(`(^|\\n)\\s*${escapeRegExp(heading)}\\s*\\n?`, "i"));
+  if (start === -1) return "";
+  const afterHeading = value.slice(start).replace(new RegExp(`^\\s*${escapeRegExp(heading)}\\s*`, "i"), "");
+  let end = afterHeading.length;
+  headings.filter((item) => item !== heading).forEach((item) => {
+    const idx = afterHeading.search(new RegExp(`\\n\\s*${escapeRegExp(item)}\\s*\\n?`, "i"));
+    if (idx !== -1 && idx < end) end = idx;
+  });
+  return afterHeading.slice(0, end).trim();
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function renderScore(score) {
@@ -552,6 +676,16 @@ function buildPrintableReportHtml(data) {
         </section>
       `).join("") : "<p>Geen bevestigde bevindingen gevonden.</p>"}
 
+      <h2>Argumentatie</h2>
+      ${getArgumentatieFindings(data).length ? getArgumentatieFindings(data).map((b) => `
+        <section>
+          <h3>${escHtml(labelForSeverity(b))}</h3>
+          <p><strong>Bevinding:</strong> ${escHtml(b.bevinding || "")}</p>
+          ${b.bewijs ? `<p><strong>Bewijs:</strong> ${escHtml(b.bewijs)}</p>` : ""}
+          ${b.herstelactie ? `<p><strong>Herstelactie:</strong> ${escHtml(b.herstelactie)}</p>` : ""}
+        </section>
+      `).join("") : `<p>${escHtml(data.argumentatie?.toelichting || "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden.")}</p>`}
+
       <h2>Bevoegdheid</h2>
       <p>Oordeel: ${escHtml(bev.oordeel || "Onbekend")}</p>
       <p>Toelichting: ${escHtml(bev.toelichting || "Geen toelichting beschikbaar.")}</p>
@@ -564,6 +698,9 @@ function buildPrintableReportHtml(data) {
 
       <h2>Onderbouwing</h2>
       <div>${formatOnderbouwing(data.onderbouwing || "")}</div>
+
+      <h2>Totstandkoming van de analyse</h2>
+      ${renderTechnicalDetails(data)}
     </div>
   `;
 }
@@ -610,8 +747,20 @@ function buildPlainTextReport(data) {
   const bev = data.bevoegdheid || {};
   lines.push("", "Bevoegdheid", `Oordeel: ${bev.oordeel || "Onbekend"}`, `Toelichting: ${bev.toelichting || "Geen toelichting beschikbaar."}`);
   if (bev.grondslag) lines.push(`Grondslag: ${bev.grondslag}`);
+  lines.push("", "Argumentatie");
+  const argumentatieItems = getArgumentatieFindings(data);
+  if (argumentatieItems.length) {
+    argumentatieItems.forEach((b, index) => {
+      lines.push(`${index + 1}. ${b.bevinding || ""}`);
+      if (b.bewijs) lines.push(`   Bewijs: ${b.bewijs}`);
+      if (b.herstelactie) lines.push(`   Herstelactie: ${b.herstelactie}`);
+    });
+  } else {
+    lines.push(data.argumentatie?.toelichting || "Geen afzonderlijke aandachtspunten bij de argumentatielijn gevonden.");
+  }
   lines.push("", "Toegankelijkheid", `Titel: ${data.titelcheck?.oordeel || "Niet beoordeeld"}`, `Leesbaarheid: ${data.leesbaarheid?.zelfstandig_leesbaar || "Niet beoordeeld"}`, `Taal B1: ${b1.oordeel || "Niet beoordeeld"}`);
   lines.push("", "Onderbouwing", stripHtml(formatOnderbouwing(data.onderbouwing || "")));
+  lines.push("", "Totstandkoming van de analyse", stripHtml(renderTechnicalDetails(data)));
   return lines.join("\n");
 }
 
