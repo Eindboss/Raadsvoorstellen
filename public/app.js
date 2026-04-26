@@ -20,8 +20,8 @@ const SCAN_STEPS = [
   { label: "Document inladen",                 duration: 2000 },
   { label: "Tekst extraheren",                 duration: 3000 },
   { label: "Voorstel classificeren",           duration: 4000 },
-  { label: "Kandidaten detecteren - Pass 1",   duration: 6000 },
-  { label: "Bevindingen valideren - Pass 2",   duration: null },  // wacht op response
+  { label: "Kandidaten detecteren · Pass 1",   duration: 6000 },
+  { label: "Bevindingen valideren · Pass 2",   duration: null },  // wacht op response
 ];
 
 let scanTimers = [];
@@ -158,17 +158,10 @@ function renderResult(data) {
   // Kern
   document.getElementById("kern-text").textContent = data.kern || "";
 
-  renderTitelcheck(data.titelcheck);
-  renderLeesbaarheid(data.leesbaarheid);
+  renderToegang(data);
 
   // Bevestigde bevindingen
   renderBevindingen(data);
-
-  // Raadsvragen
-  const vragen = data.verwachte_raadsvragen?.vragen || data.raadsvragen || [];
-  document.getElementById("vragen-list").innerHTML = vragen.length
-    ? vragen.map(v => `<li>${escHtml(v)}</li>`).join("")
-    : `<li class="vragen-leeg">Geen vragen gegenereerd voor dit type voorstel.</li>`;
 
   // Gemeente
   const heeftGemeente = data.gemeente && data.gemeente !== "Onbekend";
@@ -203,7 +196,6 @@ function renderResult(data) {
     formatOnderbouwing(data.onderbouwing || "");
 
   renderScore(data.score);
-  renderQualityIndicators(data);
   renderReportActions();
 
   statusIdle.classList.add("hidden");
@@ -218,13 +210,13 @@ function renderBeslispunten(data) {
   document.getElementById("beslispunten-list").innerHTML = beslispunten
     .map((punt, index) => {
       const check = findBeslispuntCheck(punt, checks, index);
-      const status = check && typeof check.onderbouwd === "boolean"
-        ? `<span class="decision-status ${check.onderbouwd ? "ok" : "warn"}">${check.onderbouwd ? "✓" : "⚠"}</span>`
+      const statusClass = check && typeof check.onderbouwd === "boolean"
+        ? (check.onderbouwd ? "ok" : "warn")
         : "";
-      const missing = check && check.onderbouwd === false && check.ontbrekende_onderbouwing
-        ? `<div class="decision-missing">${escHtml(check.ontbrekende_onderbouwing)}</div>`
+      const status = statusClass
+        ? `<span class="decision-status ${statusClass}" aria-hidden="true"></span>`
         : "";
-      return `<li>${status}<span class="decision-text">${escHtml(punt)}</span>${missing}</li>`;
+      return `<li>${status}<span class="decision-text">${escHtml(punt)}</span></li>`;
     })
     .join("");
 }
@@ -346,45 +338,49 @@ function formatOnderbouwing(tekst) {
   return parts.join("") || `<p>${escHtml(tekst)}</p>`;
 }
 
-function renderTitelcheck(titelcheck) {
-  const el = document.getElementById("titelcheck-line");
+function renderToegang(data) {
+  const el = document.getElementById("toegankelijkheid-content");
   if (!el) return;
-  if (!titelcheck || !titelcheck.oordeel) {
-    el.classList.add("hidden");
-    el.textContent = "";
-    return;
-  }
-  const suggestie = titelcheck.suggestie ? ` · Suggestie: ${titelcheck.suggestie}` : "";
-  el.textContent = `Titel: ${titelcheck.oordeel}${suggestie}`;
-  el.className = `titelcheck-line ${badgeClass(titelcheck.oordeel, ["Duidelijk"], ["Matig"])}`;
-}
+  const rows = [];
 
-function renderLeesbaarheid(leesbaarheid) {
-  const el = document.getElementById("leesbaarheid-line");
-  if (!el) return;
-  if (!leesbaarheid || !leesbaarheid.zelfstandig_leesbaar) {
-    el.classList.add("hidden");
-    el.innerHTML = "";
-    return;
+  const tc = data.titelcheck;
+  if (tc && tc.oordeel) {
+    const cls = tc.oordeel === "Duidelijk" ? "ok" : tc.oordeel === "Matig" ? "warn" : "err";
+    const suggestie = tc.suggestie ? `<div class="toeg-toelichting">${escHtml(tc.suggestie)}</div>` : "";
+    rows.push(`<div class="toeg-row">
+      <div class="toeg-label">Titel</div>
+      <div class="toeg-val ${cls}">${escHtml(tc.oordeel)}${suggestie}</div>
+    </div>`);
   }
-  const oordeel = leesbaarheid.zelfstandig_leesbaar;
-  const cls = badgeClass(oordeel, ["Zelfstandig leesbaar"], ["Beperkt zelfstandig"]);
-  const bijlagen = String(leesbaarheid.zonder_bijlagen || "").toLowerCase() === "nee"
-    ? `<span class="attachment-warning">Kern staat deels alleen in bijlagen</span>`
-    : "";
-  el.innerHTML = `<span class="readability-badge ${cls}">${escHtml(oordeel)}</span>${bijlagen}`;
-  el.className = "leesbaarheid-line";
-}
 
-function renderQualityIndicators(data) {
-  window.lastResult = data;
-  const el = document.getElementById("quality-badges");
-  if (!el) return;
-  const badges = [];
-  if (data.taal_b1?.oordeel) badges.push({ label: "Taal B1", value: `${data.taal_b1.oordeel} · indicatief`, cls: badgeClass(data.taal_b1.oordeel, ["B1-conform"], ["Matig"]) });
-  if (data.wcag?.oordeel) badges.push({ label: "WCAG", value: `${data.wcag.oordeel} · indicatief`, cls: badgeClass(data.wcag.oordeel, ["Toegankelijk"], ["Aandachtspunten"]) });
-  if (data.juridische_context_actief) badges.push({ label: "Juridisch", value: "referentie actief", cls: "neutral" });
-  el.innerHTML = badges.map(b => `<div class="quality-badge ${b.cls}"><span>${escHtml(b.label)}</span>${escHtml(b.value)}</div>`).join("");
+  const lb = data.leesbaarheid;
+  if (lb && lb.zelfstandig_leesbaar) {
+    const oordeel = lb.zelfstandig_leesbaar;
+    const cls = oordeel === "Zelfstandig leesbaar" ? "ok" : oordeel === "Beperkt zelfstandig" ? "warn" : "err";
+    const zonderBijlagen = String(lb.zonder_bijlagen || "").toLowerCase();
+    const bijlagen = zonderBijlagen === "nee"
+      ? `<div class="toeg-toelichting">Kern staat deels alleen in bijlagen</div>`
+      : "";
+    rows.push(`<div class="toeg-row">
+      <div class="toeg-label">Leesbaarheid</div>
+      <div class="toeg-val ${cls}">${escHtml(oordeel)}${bijlagen}</div>
+    </div>`);
+  }
+
+  const b1 = data.b1 || data.taal_b1;
+  if (b1 && b1.oordeel) {
+    const cls = ["Goed", "B1-conform"].includes(b1.oordeel) ? "ok" : b1.oordeel === "Matig" ? "warn" : "err";
+    const toelichting = b1.toelichting || (Array.isArray(b1.voorbeelden) ? b1.voorbeelden.slice(0, 2).join(" ") : "");
+    const toel = toelichting ? `<div class="toeg-toelichting">${escHtml(toelichting)}</div>` : "";
+    rows.push(`<div class="toeg-row">
+      <div class="toeg-label">Taal B1</div>
+      <div class="toeg-val ${cls}">${escHtml(b1.oordeel)}${toel}</div>
+    </div>`);
+  }
+
+  el.innerHTML = rows.length
+    ? rows.join("")
+    : `<p class="toeg-leeg">Geen toegankelijkheidsdata beschikbaar.</p>`;
 }
 
 function renderReportActions() {
@@ -419,14 +415,9 @@ function buildPlainTextReport(data) {
     });
   }
 
-  const vragen = data.verwachte_raadsvragen?.vragen || data.raadsvragen || [];
-  lines.push("", "Verwachte raadsvragen");
-  if (vragen.length) vragen.forEach((vraag, index) => lines.push(`${index + 1}. ${vraag}`));
-  else lines.push("- Geen raadsvragen gegenereerd.");
-
   lines.push("", "Indicatieve checks");
-  lines.push(`- Taal B1: ${data.taal_b1?.oordeel || "niet beoordeeld"}`);
-  lines.push(`- WCAG: ${data.wcag?.oordeel || "niet beoordeeld"}${data.wcag?.indicatief ? " (indicatief)" : ""}`);
+  const b1 = data.b1 || data.taal_b1;
+  lines.push(`- Taal B1: ${b1?.oordeel || "niet beoordeeld"}`);
 
   return lines.join("\n");
 }
@@ -454,17 +445,10 @@ async function copyTextToClipboard(text) {
   if (!ok) throw new Error("Clipboard niet beschikbaar.");
 }
 
-function badgeClass(value, greenValues, amberValues) {
-  if (greenValues.includes(value)) return "green";
-  if (amberValues.includes(value)) return "amber";
-  return "red";
-}
-
 function resetResultScrollPositions() {
   [
     "#beslispunten-list",
     "#bevoegdheid-content",
-    "#vragen-list",
     "#verbeter-list",
     ".rapport-scroll"
   ].forEach(selector => {

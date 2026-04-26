@@ -347,35 +347,6 @@ input[type="url"]:focus {
   line-height: 1;
 }
 
-.quality-badges {
-  display: flex;
-  flex-direction: column;
-  gap: 0.32rem;
-  width: 100%;
-}
-
-.quality-badge {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.34rem 0.48rem;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.72);
-  font-size: 0.68rem;
-  line-height: 1.25;
-}
-
-.quality-badge span {
-  color: rgba(255,255,255,0.94);
-  font-weight: 750;
-}
-
-.quality-badge.green { border-left: 3px solid #22c55e; }
-.quality-badge.amber { border-left: 3px solid #f59e0b; }
-.quality-badge.red { border-left: 3px solid #ef4444; }
-.quality-badge.neutral { border-left: 3px solid #9aa3b2; }
-
 .score-cats {
   display: flex;
   flex-direction: column;
@@ -561,40 +532,6 @@ input[type="url"]:focus {
   line-height: 1.45;
 }
 
-.titelcheck-line {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 0.58rem;
-  padding: 0.28rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.titelcheck-line.green {
-  background: var(--green-soft);
-  color: var(--green);
-}
-
-.titelcheck-line.amber {
-  background: var(--amber-soft);
-  color: var(--amber);
-}
-
-.titelcheck-line.red {
-  background: var(--red-soft);
-  color: var(--red);
-}
-
-.leesbaarheid-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.42rem;
-  margin-top: 0.45rem;
-}
-
 .readability-badge,
 .attachment-warning {
   display: inline-flex;
@@ -642,33 +579,23 @@ input[type="url"]:focus {
 .decision-status {
   position: absolute;
   left: 0;
-  top: 0.02rem;
-  width: 0.9rem;
-  font-weight: 850;
-  line-height: 1.35;
+  top: 0.3rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.decision-status.ok { color: var(--green); }
-.decision-status.warn { color: var(--amber); }
+.decision-status.ok { background: var(--green); }
+.decision-status.warn { background: var(--amber); }
 
 .decision-text {
   display: inline;
 }
 
-.decision-missing {
-  margin-top: 0.2rem;
-  padding: 0.28rem 0.42rem;
-  border-left: 3px solid #f59e0b;
-  border-radius: 4px;
-  background: var(--amber-soft);
-  color: var(--amber);
-  font-size: 0.74rem;
-  line-height: 1.35;
-}
-
 .card-bevoegdheid { grid-column: 1; grid-row: 2; }
-.card-vragen      { grid-column: 2; grid-row: 2; }
-.card-verbeter    { grid-column: 3; grid-row: 2; }
+.card-verbeter    { grid-column: 2; grid-row: 2; }
+.card-toegankelijkheid { grid-column: 3; grid-row: 2; }
 .card-rapport     { grid-column: 1 / -1; grid-row: 3; }
 
 .card-bevoegdheid {
@@ -679,10 +606,6 @@ input[type="url"]:focus {
 .card-bevoegdheid .card-label {
   color: var(--teal);
   background: rgba(232,245,243,0.62);
-}
-
-.card-vragen .card-label {
-  color: var(--navy-2);
 }
 
 .card-verbeter {
@@ -706,6 +629,28 @@ input[type="url"]:focus {
   line-height: 1.35;
 }
 
+.card-toegankelijkheid {
+  border-color: #d0dff5;
+  background: linear-gradient(180deg, #f8faff, #ffffff);
+}
+
+.card-toegankelijkheid .card-label {
+  color: #2563a8;
+  background: rgba(219, 234, 254, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.indicatief-label {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .card-rapport {
   border-color: #cfdce6;
   max-height: 30vh;
@@ -722,18 +667,14 @@ input[type="url"]:focus {
   font-family: inherit;
 }
 
-.card-vragen ol,
 .card-verbeter ul,
-#bevoegdheid-content {
+#bevoegdheid-content,
+#toegankelijkheid-content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding: 0.75rem 0.9rem 0.85rem;
-}
-
-.card-vragen ol {
-  padding-left: 1.95rem;
 }
 
 .dash-card ol {
@@ -745,11 +686,6 @@ input[type="url"]:focus {
 .dash-card ol li {
   margin-bottom: 0.38rem;
   padding-left: 0.08rem;
-}
-
-.card-vragen ol li::marker {
-  color: var(--navy-2);
-  font-weight: 800;
 }
 
 .card-verbeter ul {
@@ -831,10 +767,46 @@ input[type="url"]:focus {
   color: var(--green);
 }
 
-.vragen-leeg {
+.toeg-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.toeg-row:last-child {
+  border-bottom: none;
+}
+
+.toeg-label {
+  color: var(--muted);
+  font-size: 0.69rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.toeg-val {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.toeg-val.ok { color: var(--green); }
+.toeg-val.warn { color: var(--amber); }
+.toeg-val.err { color: var(--red); }
+
+.toeg-toelichting {
+  margin-top: 0.1rem;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.toeg-leeg {
   color: var(--muted);
   font-size: 0.82rem;
-  list-style: none;
 }
 
 .bevoegdheid-oordeel {
@@ -973,6 +945,7 @@ input[type="url"]:focus {
   color: rgba(255,255,255,0.25);
   font-size: 0.76rem;
   line-height: 1.32;
+  white-space: nowrap;
   transition: color 0.35s ease;
 }
 
@@ -1019,8 +992,9 @@ input[type="url"]:focus {
   }
 
   .result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
-    grid-template-rows: minmax(120px, auto) clamp(260px, 34vh, 340px) auto;
+    grid-template-rows: minmax(120px, auto) clamp(260px, 34vh, 340px) auto auto;
   }
 
   .card-kern {
@@ -1031,20 +1005,11 @@ input[type="url"]:focus {
     border-left: 0;
     border-top: 1px solid var(--line-soft);
   }
-}
-
-@media (min-width: 768px) and (max-width: 1024px) {
-  :root { --panel-w: 228px; }
-
-  .result-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-  }
 
   .card-bevoegdheid { grid-column: 1; grid-row: 2; }
-  .card-vragen      { grid-column: 2; grid-row: 2; }
-  .card-verbeter    { grid-column: 1 / -1; grid-row: 3; }
-  .card-rapport     { grid-column: 1 / -1; grid-row: 4; }
+  .card-verbeter { grid-column: 2; grid-row: 2; }
+  .card-toegankelijkheid { grid-column: 1 / -1; grid-row: 3; }
+  .card-rapport { grid-column: 1 / -1; grid-row: 4; }
 }
 
 @media (max-width: 767px) {
@@ -1100,7 +1065,6 @@ input[type="url"]:focus {
     text-align: left;
   }
 
-  .quality-badges,
   .score-cats,
   .report-actions {
     grid-column: 1 / -1;
@@ -1162,7 +1126,6 @@ input[type="url"]:focus {
     border-top: 1px solid var(--line-soft);
   }
 
-  .card-vragen ol,
   .card-verbeter ul,
   .card-kern ol,
   .rapport-scroll {
@@ -1177,8 +1140,8 @@ input[type="url"]:focus {
 
   .card-kern        { order: 1; }
   .card-bevoegdheid { order: 2; }
-  .card-vragen      { order: 3; }
-  .card-verbeter    { order: 4; }
+  .card-verbeter    { order: 3; }
+  .card-toegankelijkheid { order: 4; }
   .card-rapport     { order: 5; }
 
   .btn-primary,

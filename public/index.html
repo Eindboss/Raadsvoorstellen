@@ -72,8 +72,8 @@
             <div class="scan-step" data-step="0">Document inladen</div>
             <div class="scan-step" data-step="1">Tekst extraheren</div>
             <div class="scan-step" data-step="2">Voorstel classificeren</div>
-            <div class="scan-step" data-step="3">Kandidaten detecteren - Pass 1</div>
-            <div class="scan-step" data-step="4">Bevindingen valideren - Pass 2</div>
+            <div class="scan-step" data-step="3">Kandidaten detecteren · Pass 1</div>
+            <div class="scan-step" data-step="4">Bevindingen valideren · Pass 2</div>
           </div>
         </div>
       </div>
@@ -98,7 +98,6 @@
         <div class="score-label" id="score-label">Beoordeeld</div>
         <div class="trust-label" id="trust-label"></div>
         <div class="candidate-label" id="candidate-label"></div>
-        <div class="quality-badges" id="quality-badges"></div>
         <div class="score-cats" id="score-cats"></div>
         <div class="report-actions hidden" id="report-actions">
           <button id="copy-report-btn" class="btn-secondary" type="button">Kopieer rapport</button>
@@ -143,8 +142,6 @@
           <div class="kern-summary">
             <div class="card-label">Kern van het voorstel</div>
             <p id="kern-text"></p>
-            <div id="titelcheck-line" class="titelcheck-line hidden"></div>
-            <div id="leesbaarheid-line" class="leesbaarheid-line hidden"></div>
           </div>
           <div class="kern-beslispunten">
             <div class="card-label">Beslispunten</div>
@@ -152,21 +149,21 @@
           </div>
         </div>
 
-        <!-- Primaire cards: bevoegdheid, vragen, verbeter naast elkaar -->
+        <!-- Primaire cards: bevoegdheid, verbeter, toegankelijkheid naast elkaar -->
         <div class="dash-card card-bevoegdheid">
           <div class="card-label">Raadsbevoegdheid</div>
           <div id="bevoegdheid-content"></div>
-        </div>
-
-        <div class="dash-card card-vragen">
-          <div class="card-label">Verwachte raadsvragen</div>
-          <ol id="vragen-list"></ol>
         </div>
 
         <div class="dash-card card-verbeter">
           <div class="card-label">Verbeterpunten</div>
           <div id="blocking-banner" class="blocking-banner hidden"></div>
           <ul id="verbeter-list"></ul>
+        </div>
+
+        <div class="dash-card card-toegankelijkheid">
+          <div class="card-label">Toegankelijkheid <span class="indicatief-label">indicatief</span></div>
+          <div id="toegankelijkheid-content"></div>
         </div>
 
         <!-- Kwaliteitstoets: onderbouwing onderaan -->

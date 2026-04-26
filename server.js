@@ -530,8 +530,7 @@ async function callOpenAIOld(text, dynamicMetadata = {
   const userPrompt = `Beoordeel dit concept-raadsvoorstel volgens de rubric.
 Stap 1: classificeer het voorstel volledig (hoofdType, subType, complexiteit, toetsprofiel).
 Stap 2: voer de toets uit waarbij je per rubriek het toetsprofiel toepast en formuleer geen aandachtspunten voor rubrieken die niet relevant zijn.
-Stap 3: genereer altijd minimaal 3 concrete raadsvragen toegespitst op dit voorstel.
-Stap 4: voer bij bevoegdheid expliciet de Schuwer-toets uit.
+Stap 3: voer bij bevoegdheid expliciet de Schuwer-toets uit.
 
 Geef je antwoord als geldig JSON in dit exacte formaat:
 {
@@ -562,7 +561,6 @@ Geef je antwoord als geldig JSON in dit exacte formaat:
   "beslispunten": ["beslispunt 1", "beslispunt 2"],
   "kern": "Publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen.",
   "verbeterpunten": ["concreet verbeterpunt 1", "concreet verbeterpunt 2"],
-  "raadsvragen": ["Vraag die een raadslid stelt 1?", "Vraag 2?", "Vraag 3?"],
   "bevoegdheid": {
     "oordeel": "ja | nee | onduidelijk | niet van toepassing",
     "toelichting": "Compacte Schuwer-toets: gaat de raad hier echt over of is sprake van college/burgemeestersbevoegdheid, controle, zienswijze of kennisname? Noem ook terminologierisico als dat speelt. Max 3 zinnen.",
@@ -598,7 +596,6 @@ Regels:
 - beslispunten: letterlijk overgenomen uit het voorstel, elk als aparte string
 - kern: publiekssamenvatting in B1-taalniveau, maximaal 3 zinnen, geen jargon, geen afkortingen
 - verbeterpunten: alleen aandachtspunten voor rubrieken met toetsprofiel "normaal" of "streng"; maximaal 6
-- raadsvragen: minimaal 3, maximaal 5; concreet en toegespitst op dit voorstel; bij een puur ceremoniële benoeming mag de lijst 2 vragen bevatten
 - bevoegdheid.oordeel: "ja", "nee", "onduidelijk" of "niet van toepassing"
 - bevoegdheid.toelichting: combineer Schuwer-toets en terminologierisico in max 3 zinnen
 - bevoegdheid.grondslag: gevonden wettelijke grondslag of lege string
@@ -802,88 +799,6 @@ function buildOnderbouwing(bevindingen, advies) {
   return `Aandachtspunten\n${aandacht}\n\nRisico's\n${risico}\n\nAdvies\n${advies}`;
 }
 
-function buildExpectedQuestions(bevindingen, typeGaps, legalArticles, beslispunten = []) {
-  const questions = [];
-  const addQuestion = (question) => {
-    const cleaned = String(question || "").replace(/\s+/g, " ").trim();
-    if (!cleaned || questions.length >= 5) return;
-    if (!questions.includes(cleaned)) questions.push(cleaned);
-  };
-  const decisionSubject = describeDecisionSubject(beslispunten);
-
-  for (const item of safeArray(bevindingen)) {
-    if (questions.length >= 5) break;
-    addQuestion(questionForFinding(item, decisionSubject));
-  }
-  for (const beslispunt of safeArray(beslispunten)) {
-    if (questions.length >= 5) break;
-    const short = cleanDecisionText(beslispunt);
-    if (short) addQuestion(`Welke toelichting onderbouwt concreet dit beslispunt: ${short}?`);
-  }
-  for (const gap of safeArray(typeGaps)) {
-    if (questions.length >= 5) break;
-    addQuestion(questionForGap(gap, decisionSubject));
-  }
-  for (const article of safeArray(legalArticles)) {
-    if (questions.length >= 3) break;
-    addQuestion(`Welke wettelijke basis gebruikt het college voor dit besluit, en sluit die aan op ${article.wet} artikel ${article.artikel}?`);
-  }
-  return questions;
-}
-
-function questionForFinding(item, decisionSubject) {
-  const text = `${item.rubriek || ""} ${item.bevinding || ""} ${item.bewijs || ""}`.toLowerCase();
-  const subject = decisionSubject || "dit voorstel";
-
-  if (/(beslispunt|onderbouwing)/.test(text)) {
-    return `Welke inhoudelijke onderbouwing hoort bij het gevraagde besluit over ${subject}, en waar staat die in de toelichting?`;
-  }
-  if (/(financi|dekking|krediet|begroting|kosten|bedrag|tegenvaller)/.test(text)) {
-    return `Welke financiële gevolgen, dekking en mogelijke tegenvallers horen bij ${subject}, en hoe zijn die in de begroting verwerkt?`;
-  }
-  if (/(uitvoering|planning|tijdspad|verantwoordelijk|voortgang|consistentie)/.test(text)) {
-    return `Wie is verantwoordelijk voor de uitvoering van ${subject}, welke stappen volgen en wanneer wordt de raad over voortgang geïnformeerd?`;
-  }
-  if (/(participatie|inspraak|bewoner|belanghebbend)/.test(text)) {
-    return `Welke belanghebbenden zijn betrokken bij ${subject}, wat was hun inbreng en wat is daarmee gedaan?`;
-  }
-  if (/(risico|beheersmaatregel|onzeker)/.test(text)) {
-    return `Welke belangrijkste risico's ziet het college bij ${subject}, en welke beheersmaatregelen zijn daarvoor voorzien?`;
-  }
-  if (/(juridisch|grondslag|bevoegd|rechtsgevolg|verordening)/.test(text)) {
-    return `Welke juridische grondslag en welk rechtsgevolg heeft het gevraagde besluit over ${subject}?`;
-  }
-  if (/(bijlage|leesbaar|zelfstandig|afkorting)/.test(text)) {
-    return `Welke kerninformatie over ${subject} staat nu alleen in bijlagen of vaktaal, en kan die in de toelichting worden samengevat?`;
-  }
-  return `Welk concreet risico voor de besluitvorming ontstaat bij ${subject}, en welke aanvulling krijgt de raad vóór behandeling?`;
-}
-
-function questionForGap(gap, decisionSubject) {
-  const type = String(gap.informatie_type || "").toLowerCase();
-  const subject = decisionSubject || "dit voorstel";
-  if (type.includes("financ")) return `Welke financiële effecten van ${subject} zijn structureel en welke zijn incidenteel?`;
-  if (type.includes("uitvoering")) return `Welke uitvoeringsstappen, verantwoordelijke partijen en rapportagemomenten horen bij ${subject}?`;
-  if (type.includes("risico")) return `Welke risico's kunnen het besluit over ${subject} financieel, juridisch of praktisch raken?`;
-  if (type.includes("participatie")) return `Hoe zijn inwoners of betrokken organisaties meegenomen bij ${subject}, en wat is zichtbaar met hun inbreng gedaan?`;
-  return `Welke informatie over ${gap.informatie_type} heeft de raad nog nodig om ${subject} verantwoord te beoordelen?`;
-}
-
-function describeDecisionSubject(beslispunten) {
-  const first = safeArray(beslispunten).map(cleanDecisionText).find(Boolean);
-  if (!first) return "";
-  return first.replace(/\.$/, "").slice(0, 130);
-}
-
-function cleanDecisionText(value) {
-  return String(value || "")
-    .replace(/^\s*(de raad\s+)?(besluit\s+)?(om\s+)?/i, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/[.;:]$/, "")
-    .slice(0, 160);
-}
-
 async function callOpenAI(text, dynamicMetadata = {}) {
   dynamicMetadata = {
     hoofdType: "overig",
@@ -917,6 +832,18 @@ C. Leesbaarheid zonder bijlagen: signaleer als cruciale informatie alleen in bij
 D. Onuitvoerbaarheid of juridische onjuistheid: signaleer concrete onuitvoerbaarheid, onhoudbaarheid of evident onjuiste informatie.
 E. Interne tegenstrijdigheden: controleer bedragen, planning, rolverdeling en conclusie. Benoem beide botsende passages in de reden.
 F. Besluit zonder rechtsgevolg: signaleer alleen als het besluit geen duidelijk doel of vervolg heeft, of feitelijk al elders is besloten.
+
+Argumentatielijn
+Beoordeel of de redenering in de toelichting aansluit op de beslispunten:
+- Staan er concrete argumenten die het gevraagde besluit rechtvaardigen,
+  of worden de beslispunten gevraagd zonder inhoudelijke onderbouwing?
+- Als het voorstel alternatieven of kanttekeningen noemt: worden die
+  betrokken in de afweging, of staan ze decoratief naast de hoofdlijn?
+- Kan een raadslid zonder bijlagen begrijpen wat er besloten wordt en waarom?
+  Als de kern van de argumentatie alleen in bijlagen staat: signaleer dit.
+Formuleer alleen een bevinding als er een concrete zwakte zichtbaar is.
+Aantoonbare afwezigheid van argumentatie is een bevinding; dunne of
+compacte toelichting bij een eenvoudig besluit is dat niet.
 
 Beoordeel ook indicatief:
 - Taalniveau B1: B1-conform, Matig of Complex, met maximaal 3 voorbeeldzinnen.
@@ -1039,9 +966,6 @@ ${validationText}`;
   const label = scoreLabel(scoreValue);
   const vertrouwen = calculateTrust(bevindingen, verworpenKandidaten);
   const advies = buildAdvice(bevindingen);
-  const typeGaps = safeArray(typeGapsCache[dynamicMetadata.hoofdType]);
-  const legalArticles = safeArray(legalArticlesCache[dynamicMetadata.hoofdType]);
-  const raadsvragen = buildExpectedQuestions(bevindingen, typeGaps, legalArticles, pass1.beslispunten);
 
   return {
     gemeente: pass1.gemeente || "Onbekend",
@@ -1072,10 +996,6 @@ ${validationText}`;
     bevindingen,
     verworpen_kandidaten: verworpenKandidaten,
     vertrouwen,
-    verwachte_raadsvragen: {
-      label: "Verwachte raadsvragen",
-      vragen: raadsvragen
-    },
     advies,
     besluitrijpheid: scoreValue < 50 ? "onvoldoende" : scoreValue < 85 ? "voldoende" : "goed",
     kandidaten_count: kandidaten.length,
@@ -1084,7 +1004,6 @@ ${validationText}`;
     beslispunten: safeArray(pass1.beslispunten),
     bevoegdheid: pass1.bevoegdheid || { oordeel: "onduidelijk", toelichting: "", grondslag: "" },
     verbeterpunten: bevindingen.map(item => item.herstelactie || item.bevinding),
-    raadsvragen,
     onderbouwing: buildOnderbouwing(bevindingen, advies)
   };
 }
@@ -1154,7 +1073,6 @@ module.exports = {
   classifyProposal,
   buildDynamicContext,
   buildLegalContext,
-  buildExpectedQuestions,
   calculateScore,
   calculateTrust
 };
