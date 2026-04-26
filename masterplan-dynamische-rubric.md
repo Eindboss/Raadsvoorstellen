@@ -264,6 +264,8 @@ rubrieksecties meetellen in score en rapportage.
 | Fase 4: integratie server.js (2 calls + retrieval) | ✅ compleet — gepusht naar main (d3cba6c) | — |
 | Fase 5: offline validatie (30-50 voorstellen) | ✅ proxy-validatie gedraaid (50 voorstellen) — recall +14,9pp, precisie 55,3% | — |
 | Fase 5b: echte review 30 voorstellen + regressiefix | ✅ compleet — 14/28 verbeterd, 3 regressies geïdentificeerd en opgelost (a93b4b5) | — |
+| Gemeentewet/Wgr referentiecontrole | ✅ compleet — `public/legal-articles.json`, 10 types, 6 wetten (commit 1dccf2d) | — |
+| Tweefasige toets (architectuurswitch) | ✅ compleet — Pass 1 detectie + Pass 2 validatie, 100% bewijscitaat, recall -6,9pp (commit 2e92976) | — |
 | Fase 6: productie + monitoring | 🔄 gedeeltelijk — logging aanwezig, dashboard ontbreekt | — |
 | Fase 7: feedbackloop | ⏳ | 3 maanden productie |
 
